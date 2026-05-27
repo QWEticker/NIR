@@ -1,0 +1,10 @@
+{
+    "name": "attack_lo",
+    "base": {
+        "alpha": 0.5, "xi": 0.01, "eta": 0.6, "v_el": 0.05,
+        "beta": 0.95, "saturation_level": 10.0, "N": 500000, "seed": 200
+    },
+    "distances_km": [10, 20, 40],
+    "attacks": ["lo"],
+    "runs_per_point": 5
+}

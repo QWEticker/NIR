@@ -1,0 +1,28 @@
+#pragma once
+#include "core/types.hpp"
+#include <utility>
+
+namespace cvqkd 
+{
+
+struct ChannelEstimate {
+    double T_hat;               ///< Оценка трансмиссивности
+    double xi_hat;              ///< Оценка избыточного шума (SNU)
+    double T_ci_half;           ///< Полуширина ДИ для T (95%)
+    double xi_ci_half;          ///< Полуширина ДИ для ξ (95%)
+    double sigma2_residual;     ///< Дисперсия остатков
+    std::size_t n_samples;
+};
+
+/// MLE-оценка параметров канала по парам (x_A, y_B) методом наименьших квадратов.
+class ParameterEstimator {
+public:
+    explicit ParameterEstimator(double confidence_level = 0.95);
+
+    ChannelEstimate estimate(const VectorR& x_alice,
+                             const VectorR& y_bob) const;
+private:
+    double conf_;
+};
+
+} // namespace cvqkd

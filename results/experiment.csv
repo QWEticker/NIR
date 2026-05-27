@@ -1,0 +1,2 @@
+scenario,distance_km,T_true,xi_true,T_hat,xi_hat,T_ci,xi_ci,I_AB,chi_BE,K_asymp,K_beta,secure,elapsed_ms
+nominal,5,0.794328,0.01,0.467128,5.50268,0.00709325,0.550268,0.0343034,2.88175,0,0,0,1154.62
