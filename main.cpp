@@ -11,18 +11,7 @@
 
 using namespace cvqkd;
 
-#ifdef _WIN32
-#include <windows.h>
-#include <io.h>
-#include <fcntl.h>
-#endif
-
 int main(int argc, char** argv) {
-#ifdef _WIN32
-    SetConsoleOutputCP(CP_UTF8);
-    _setmode(_fileno(stdout), _O_U8TEXT);
-    _setmode(_fileno(stderr), _O_U8TEXT);
-#endif
     std::string cfg_path = "experiments/nominal.json";
     std::string out_csv  = "results/experiment.csv";
 
