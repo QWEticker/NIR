@@ -2,6 +2,8 @@
 #include "experiment/statistics_logger.hpp"
 #include "attacks/saturation_attack.hpp"
 #include "attacks/lo_manipulation_attack.hpp"
+#include "attacks/intercept_resend_attack.hpp"
+#include "attacks/collective_attack.hpp"
 #include <cstring>
 #include <iostream>
 #include <memory>
@@ -43,6 +45,10 @@ int main(int argc, char** argv) {
                     std::make_unique<SaturationAttack>(cfg.base.saturation_level, 2.0));
             else if (atk == "lo")
                 runner.attach_attack(std::make_unique<LOManipulationAttack>(0.7));
+            else if (atk == "intercept_resend")
+                runner.attach_attack(std::make_unique<InterceptResendAttack>(0.8, 1.0, cfg.base.seed + 1000));
+            else if (atk == "collective")
+                runner.attach_attack(std::make_unique<CollectiveAttack>(0.3, 0.05, cfg.base.seed + 2000));
         }
 
         runner.run();

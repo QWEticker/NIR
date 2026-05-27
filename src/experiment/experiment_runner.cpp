@@ -25,7 +25,7 @@ void ExperimentRunner::run_one_point(double dist, const std::string& scenario) {
     QPSKModulator      mod(pc.alpha, pc.seed);
     QuantumChannel     ch(pc);
     HeterodyneDetector det(pc);
-    ParameterEstimator est(0.95);
+    ParameterEstimator est(pc, 0.95);
     SecurityAnalyzer   sec(pc);
 
     auto t0 = std::chrono::steady_clock::now();
