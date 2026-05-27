@@ -1,5 +1,0 @@
-if(EXISTS "C:/Users/konov/Documents/NIR/build/cvqkd_tests[1]_tests.cmake")
-  include("C:/Users/konov/Documents/NIR/build/cvqkd_tests[1]_tests.cmake")
-else()
-  add_test(cvqkd_tests_NOT_BUILT cvqkd_tests_NOT_BUILT)
-endif()
