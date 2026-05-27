@@ -5,7 +5,8 @@
 
 namespace cvqkd {
 
-ParameterEstimator::ParameterEstimator(double c) : conf_(c) {}
+ParameterEstimator::ParameterEstimator(const ProtocolConfig& cfg, double c) 
+    : cfg_(cfg), conf_(c) {}
 
 ChannelEstimate ParameterEstimator::estimate(const VectorR& x, const VectorR& y) const {
     const Eigen::Index n = x.size();

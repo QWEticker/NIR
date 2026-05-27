@@ -1,73 +1,47 @@
 ```
-# Compiled and build artifacts
-*.o
-*.obj
-*.a
-*.so
-*.dll
-*.exe
-*.class
-*.pyc
-__pycache__/
-
-# Dependencies
-node_modules/
-venv/
-.venv/
-.env
-.env.local
-.env.*
-
 # Build directories
 build/
-dist/
-target/
-.gradle/
+cmake-build-*/
 
-# Editors
-.vscode/
-.idea/
-*.swp
-*.swo
+# CMake files
+CMakeCache.txt
+CMakeFiles/
+CMakeScripts/
 
-# Logs and temp files
+# Visual Studio files
+*.sln
+*.vcxproj
+*.vcxproj.filters
+*.user
+*.suo
+*.sdf
+*.opensdf
+*.vc.db
+*.VC.VC.opendb
+
+# Compiled object files
+*.o
+*.obj
+*.lib
+*.a
+*.so
+*.dylib
+*.dll
+*.exe
+*.pdb
+
+# Testing
+Testing/
+
+# Dependencies
+_deps/
+
+# Logs
 *.log
+
+# Temporary files
 *.tmp
-
-# System files
-.DS_Store
-Thumbs.db
-
-# Coverage
-coverage/
-htmlcov/
-.coverage
-
-# Python specific
-.mypy_cache/
-.pytest_cache/
-
-# Compressed files
-*.zip
-*.gz
-*.tar
-*.tgz
-*.bz2
-*.xz
-*.7z
-*.rar
-*.zst
-*.lz4
-*.lzh
-*.cab
-*.arj
-*.rpm
-*.deb
-*.Z
-*.lz
-*.lzo
-*.tar.gz
-*.tar.bz2
-*.tar.xz
-*.tar.zst
+*.recipe
+*.tlog
+*.lastbuildstate
 ```

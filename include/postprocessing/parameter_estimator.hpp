@@ -1,4 +1,5 @@
 #pragma once
+#include "core/config.hpp"
 #include "core/types.hpp"
 #include <utility>
 
@@ -17,11 +18,12 @@ struct ChannelEstimate {
 /// MLE-оценка параметров канала по парам (x_A, y_B) методом наименьших квадратов.
 class ParameterEstimator {
 public:
-    explicit ParameterEstimator(double confidence_level = 0.95);
+    explicit ParameterEstimator(const ProtocolConfig& cfg, double confidence_level = 0.95);
 
     ChannelEstimate estimate(const VectorR& x_alice,
                              const VectorR& y_bob) const;
 private:
+    ProtocolConfig cfg_;
     double conf_;
 };
 

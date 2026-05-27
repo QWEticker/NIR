@@ -4,19 +4,19 @@
 cmake_minimum_required(VERSION 3.5)
 
 file(MAKE_DIRECTORY
-  "C:/Users/konov/Documents/NIR/build/_deps/googletest-src"
-  "C:/Users/konov/Documents/NIR/build/_deps/googletest-build"
-  "C:/Users/konov/Documents/NIR/build/_deps/googletest-subbuild/googletest-populate-prefix"
-  "C:/Users/konov/Documents/NIR/build/_deps/googletest-subbuild/googletest-populate-prefix/tmp"
-  "C:/Users/konov/Documents/NIR/build/_deps/googletest-subbuild/googletest-populate-prefix/src/googletest-populate-stamp"
-  "C:/Users/konov/Documents/NIR/build/_deps/googletest-subbuild/googletest-populate-prefix/src"
-  "C:/Users/konov/Documents/NIR/build/_deps/googletest-subbuild/googletest-populate-prefix/src/googletest-populate-stamp"
+  "/workspace/build/_deps/googletest-src"
+  "/workspace/build/_deps/googletest-build"
+  "/workspace/build/_deps/googletest-subbuild/googletest-populate-prefix"
+  "/workspace/build/_deps/googletest-subbuild/googletest-populate-prefix/tmp"
+  "/workspace/build/_deps/googletest-subbuild/googletest-populate-prefix/src/googletest-populate-stamp"
+  "/workspace/build/_deps/googletest-subbuild/googletest-populate-prefix/src"
+  "/workspace/build/_deps/googletest-subbuild/googletest-populate-prefix/src/googletest-populate-stamp"
 )
 
-set(configSubDirs Debug)
+set(configSubDirs )
 foreach(subDir IN LISTS configSubDirs)
-    file(MAKE_DIRECTORY "C:/Users/konov/Documents/NIR/build/_deps/googletest-subbuild/googletest-populate-prefix/src/googletest-populate-stamp/${subDir}")
+    file(MAKE_DIRECTORY "/workspace/build/_deps/googletest-subbuild/googletest-populate-prefix/src/googletest-populate-stamp/${subDir}")
 endforeach()
 if(cfgdir)
-  file(MAKE_DIRECTORY "C:/Users/konov/Documents/NIR/build/_deps/googletest-subbuild/googletest-populate-prefix/src/googletest-populate-stamp${cfgdir}") # cfgdir has leading slash
+  file(MAKE_DIRECTORY "/workspace/build/_deps/googletest-subbuild/googletest-populate-prefix/src/googletest-populate-stamp${cfgdir}") # cfgdir has leading slash
 endif()
