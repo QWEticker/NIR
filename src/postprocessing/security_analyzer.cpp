@@ -1,9 +1,6 @@
 #include "postprocessing/security_analyzer.hpp"
-#include <Eigen/Dense>
-#include <Eigen/Eigenvalues>
 #include <algorithm>
 #include <cmath>
-#include <vector>
 
 namespace cvqkd {
 
@@ -26,44 +23,37 @@ double SecurityAnalyzer::holevo_bound(double T, double xi, double V_A) const {
     const double chi_det = (1.0 + cfg_.v_el) / (T * cfg_.eta);
     const double chi_tot = chi_line + chi_det;
 
-    // Ковариационная матрица γ_AB для гетеродина (4x4)
-    Eigen::Matrix4d g = Eigen::Matrix4d::Identity() * V;
-    const double corr = std::sqrt(T) * std::sqrt(V * V - 1.0);
-    g(0, 2) = g(2, 0) =  corr;
-    g(1, 3) = g(3, 1) = -corr;
-    g(2, 2) = g(3, 3) = T * (V + chi_tot);
-
-    // Симплектическая форма Ω
-    Eigen::Matrix4d Om = Eigen::Matrix4d::Zero();
-    Om(0, 1) =  1.0; Om(1, 0) = -1.0;
-    Om(2, 3) =  1.0; Om(3, 2) = -1.0;
-
-    // Собственные значения iΩγ
-    Eigen::EigenSolver<Eigen::Matrix4d> es(Om * g, false);
-    std::vector<double> nu;
-    for (const auto& ev : es.eigenvalues()) {
-        const double a = std::abs(ev.imag());
-        if (a > 1e-9) nu.push_back(a);
-    }
-    std::sort(nu.begin(), nu.end());
-    // Оставляем уникальные с точностью
-    nu.erase(std::unique(nu.begin(), nu.end(),
-        [](double a, double b){ return std::abs(a-b) < 1e-6; }), nu.end());
-
-    // Для гетеродина обычно два ненулевых симплектических корня
-    double S_AB = 0.0;
-    for (double n : nu) S_AB += g_entropy(n);
-
-    // Условная энтропия S(A|B)
-    const double V_AgB = V - (corr * corr) / (T * (V + chi_tot));
-    const double S_AgB = g_entropy(V_AgB);
+    // Аналитическое решение для симплектических собственных значений 4x4 матрицы
+    // Для гетеродинного детектирования с ковариационной матрицей специального вида
+    const double corr = std::sqrt(T) * std::sqrt(std::max(0.0, V * V - 1.0));
+    const double B = T * (V + chi_tot);
     
-    // χ(B:E) = S_AB - S_AgB
+    // След и детерминант для характеристического полинома
+    const double trace_term = V * V + B * B + 2.0 * corr * corr;
+    const double det_gamma = V * V * B * B - 2.0 * V * B * corr * corr + corr * corr * corr * corr;
+    
+    // Решаем квадратное уравнение для ν²
+    const double discriminant = trace_term * trace_term - 4.0 * det_gamma;
+    if (discriminant < 0.0) {
+        return g_entropy(V) + g_entropy(B) - g_entropy(V - corr * corr / B);
+    }
+    
+    const double sqrt_disc = std::sqrt(discriminant);
+    const double nu1_sq = (trace_term + sqrt_disc) / 2.0;
+    const double nu2_sq = (trace_term - sqrt_disc) / 2.0;
+    
+    const double nu1 = std::sqrt(std::max(0.0, nu1_sq));
+    const double nu2 = std::sqrt(std::max(0.0, nu2_sq));
+    
+    double S_AB = g_entropy(nu1) + g_entropy(nu2);
+    
+    const double V_AgB = V - (corr * corr) / B;
+    const double S_AgB = g_entropy(std::max(1.0, V_AgB));
+    
     return std::max(0.0, S_AB - S_AgB);
 }
 
 SecurityMetrics SecurityAnalyzer::compute(double T, double xi, double V_A) const {
-    // Общий шум, приведённый ко входу
     const double chi_tot = (1.0 - T) / T + xi + (1.0 + cfg_.v_el) / (T * cfg_.eta);
     const double SNR     = V_A / chi_tot;
 

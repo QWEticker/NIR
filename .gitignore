@@ -1,47 +1,29 @@
 ```
-# Build directories
+# Build artifacts and temporary build files
 build/
-cmake-build-*/
-
-# CMake files
 CMakeCache.txt
 CMakeFiles/
-CMakeScripts/
+cmake_install.cmake
+CTestTestfile.cmake
 
-# Visual Studio files
-*.sln
-*.vcxproj
-*.vcxproj.filters
-*.user
-*.suo
-*.sdf
-*.opensdf
-*.vc.db
-*.VC.VC.opendb
-
-# Compiled object files
-*.o
-*.obj
-*.lib
-*.a
-*.so
-*.dylib
-*.dll
-*.exe
-*.pdb
-
-# Testing
-Testing/
-
-# Dependencies
+# Dependencies and external projects
 _deps/
 
-# Logs
+# Results and data files
+results/
+*.csv
+
+# Environment and temporary files
+*.tmp
 *.log
 
-# Temporary files
-*.tmp
-*.recipe
-*.tlog
-*.lastbuildstate
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS specific files
+.DS_Store
+Thumbs.db
 ```
