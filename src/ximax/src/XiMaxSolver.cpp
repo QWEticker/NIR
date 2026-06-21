@@ -2,7 +2,9 @@
 #include "HolevoCalculator.h"
 #include "FiniteKeyAnalyzer.h"
 #include "HeterodyneReceiverDetailed.h"
+#include "../../include/attacks/attack_model.hpp"
 #include <cmath>
+#include <functional>
 
 namespace nir {
 
@@ -23,15 +25,34 @@ XiMaxResult XiMaxSolver::solve(double L, double alpha_db_per_km, double V_A, dou
     double xi_low = 0.0;
     double xi_high = 1.0; // SNU
 
+    // Attack model hook: by default no attack (nullptr). Can be set by caller via overloaded solve() in future.
+    std::function<cvqkd::AttackResult(double,double,double)> attack_effect = nullptr;
+
     auto keyrate_for_xi = [&](double xi)->double {
-        // Build covariance matrix for entangling cloner
-        Eigen::Matrix4d Vbe = HolevoCalculator::buildEntanglingClonerCM(T, V_A, xi + 0.0);
+        double xi_effective = xi;
+        Eigen::Matrix4d Vbe;
+        bool use_custom_cm = false;
+
+        if (attack_effect) {
+            auto ar = attack_effect(T, V_A, xi);
+            if (ar.type == cvqkd::AttackResultType::XiAdd) {
+                xi_effective += ar.xi_add;
+            } else if (ar.type == cvqkd::AttackResultType::Covariance) {
+                Vbe = ar.modified_cm;
+                use_custom_cm = true;
+            }
+        }
+
+        // Build covariance matrix for entangling cloner if not provided by attack
+        if (!use_custom_cm) {
+            Vbe = HolevoCalculator::buildEntanglingClonerCM(T, V_A, xi_effective + 0.0);
+        }
         // compute Holevo chi(B;E) for heterodyne at Bob
         double chi = HolevoCalculator::computeHolevoFromCM(Vbe);
 
         // Compute Bob's SNR and mutual information (Gaussian approx)
         double signal = T * V_A;
-        double noise = 1.0 + T * xi + v_det;
+        double noise = 1.0 + T * xi_effective + v_det;
         double snr = (noise > 0.0) ? signal / noise : 0.0;
         double Iab = 0.5 * std::log2(1.0 + snr);
 

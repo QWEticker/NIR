@@ -36,6 +36,9 @@ struct ExperimentConfig {
     ProtocolConfig            base;
     std::vector<double>       distances_km;       ///< sweep по дистанциям
     std::vector<std::string>  attacks;            ///< {"none","saturation","lo"}
+    // Optionally the config may contain attack descriptions as full JSON objects —
+    // we'll store raw JSON strings to keep backward compatibility with simple string list.
+    std::vector<std::string>  attack_params_json;
     std::size_t               runs_per_point = 5; ///< число повторов
 
     static ExperimentConfig from_json_file(const std::string& path);
