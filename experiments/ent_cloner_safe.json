@@ -1,8 +1,8 @@
 {
-  "name": "distance_sweep",
+  "name": "ent_cloner_safe",
   "base": {
     "alpha": 0.2,
-    "xi": 0.0005,
+    "xi": 0.001,
     "eta": 0.9,
     "v_el": 0.001,
     "beta": 0.98,
@@ -12,7 +12,9 @@
     "V_A": 0.5,
     "eps_total": 1e-9
   },
-  "distances_km": [5, 10, 20, 40, 60],
-  "attacks": [ { "name": "none" } ],
+  "distances_km": [5, 10, 20],
+  "attacks": [
+    { "name": "entangling_cloner", "param": 0.0005 }
+  ],
   "runs_per_point": 3
 }
