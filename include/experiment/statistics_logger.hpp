@@ -15,7 +15,7 @@ class StatisticsLogger {
     void write_header();
     void log(const std::string &scenario, double distance_km, double T_true,
              double xi_true, const ChannelEstimate &est, const SecurityMetrics &metrics,
-             double elapsed_ms);
+             double elapsed_ms, const std::string &attack_name = "", const std::string &attack_params = "");
 
   private:
     std::ofstream out_;
