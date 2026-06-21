@@ -1,5 +1,9 @@
 #include "gtest/gtest.h"
 #include "attacks/attack_model.hpp"
+#include "attacks/entangling_cloner_model.hpp"
+#include "attacks/intercept_resend_model.hpp"
+#include "attacks/lo_manipulation_model.hpp"
+#include "attacks/saturation_model.hpp"
 
 using namespace cvqkd;
 
