@@ -18,7 +18,7 @@ StatisticsLogger::StatisticsLogger(const std::string& p) {
 
 void StatisticsLogger::write_header() {
     out_ << "scenario,distance_km,T_true,xi_true,"
-            "T_hat,xi_hat,T_ci,xi_ci,"
+            "T_hat,xi_hat,xi_eff,T_ci,xi_ci,"
             "I_AB,chi_BE,K_asymp,K_beta,secure,elapsed_ms,attack_name,attack_params\n";
 }
 
@@ -30,7 +30,7 @@ void StatisticsLogger::log(const std::string& sc, double d,
                            const std::string &attack_name,
                            const std::string &attack_params) {
     out_ << sc << ',' << d << ',' << T << ',' << xi << ','
-         << e.T_hat << ',' << e.xi_hat << ','
+         << e.T_hat << ',' << e.xi_hat << ',' << m.xi_eff << ','
          << e.T_ci_half << ',' << e.xi_ci_half << ','
          << m.I_AB << ',' << m.chi_BE << ','
          << m.K_asymptotic << ',' << m.K_beta << ','
