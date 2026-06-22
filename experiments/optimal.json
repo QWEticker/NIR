@@ -1,0 +1,17 @@
+{
+    "name": "optimal",
+    "_comment": "Optimal coherent-state CV-QKD operating point. Parameters follow the long-distance experimental regime of Huang et al., npj Quantum Information 2 (2016) 16025 and the coherent-state protocol of Grosshans & Grangier, PRL 88 (2002) 057902: near-optimal modulation variance V_A = alpha^2 = 4 SNU, detector efficiency eta = 0.6, electronic noise v_el = 0.015 SNU, channel excess noise xi = 0.01 SNU, reconciliation efficiency beta = 0.95, fibre loss 0.2 dB/km. saturation_level is set very high so the baseline detector never clips.",
+    "base": {
+        "alpha": 2.0,
+        "xi": 0.01,
+        "eta": 0.6,
+        "v_el": 0.015,
+        "beta": 0.95,
+        "saturation_level": 1000000000.0,
+        "N": 600000,
+        "seed": 42
+    },
+    "distances_km": [1, 5, 10, 15, 20, 25, 30, 40, 50, 60, 70, 80],
+    "attacks": ["none"],
+    "runs_per_point": 1
+}

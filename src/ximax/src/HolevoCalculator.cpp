@@ -28,17 +28,17 @@ Matrix4d HolevoCalculator::buildEntanglingClonerCM(double T, double V_A, double 
     double e = (1.0 - T) * V + T * W;
     double c = std::sqrt(std::max(0.0, T * (1.0 - T))) * (V - W);
 
-    Matrix4d V;
-    V.setZero();
+    Matrix4d Vbe;
+    Vbe.setZero();
     // V_B (xB,pB)
-    V(0,0) = b; V(1,1) = b;
+    Vbe(0,0) = b; Vbe(1,1) = b;
     // V_E (xE,pE)
-    V(2,2) = e; V(3,3) = e;
+    Vbe(2,2) = e; Vbe(3,3) = e;
     // Correlations C (xB <-> xE) and (pB <-> pE) with sign flip on p
-    V(0,2) = c; V(2,0) = c;
-    V(1,3) = -c; V(3,1) = -c;
+    Vbe(0,2) = c; Vbe(2,0) = c;
+    Vbe(1,3) = -c; Vbe(3,1) = -c;
 
-    return V;
+    return Vbe;
 }
 
 static inline double log2d(double x) { return std::log(x) / std::log(2.0); }

@@ -34,6 +34,8 @@ message(STATUS "✅ nlohmann/json: ${JSON_INCLUDE_DIR}")
 # === Основная библиотека ===
 # ============================================================
 file(GLOB_RECURSE LIB_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp")
+# Exclude unit-test translation units (they depend on GoogleTest and define their own TEST cases)
+list(FILTER LIB_SOURCES EXCLUDE REGEX ".*/tests/.*")
 file(GLOB_RECURSE LIB_HEADERS "${CMAKE_CURRENT_SOURCE_DIR}/include/*.hpp")
 
 add_library(cvqkd_lib STATIC ${LIB_SOURCES} ${LIB_HEADERS})
@@ -41,6 +43,8 @@ set_target_properties(cvqkd_lib PROPERTIES OUTPUT_NAME "cvqkd")
 
 target_include_directories(cvqkd_lib PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/ximax/include>
     $<INSTALL_INTERFACE:include>
     "${EIGEN_INCLUDE_DIR}"
     "${JSON_INCLUDE_DIR}"
