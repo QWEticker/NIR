@@ -184,6 +184,68 @@ def main():
         print(f"      best@{d0}km K_beta={best[d0]['K_beta']:.4f} "
               f"(baseline {base_curve[d0]['K_beta']:.4f}) params={bp}")
 
+    # --- Stage 5: recovery strategy comparison (per attack) -----------------
+    # For each attack, sweep the FULL grid once, then derive, per distance,
+    # the best K_beta achievable when the legitimate users may tune:
+    #   * all parameters at once (alpha, beta, calibration) -- "как раньше";
+    #   * only alpha (beta, calibration fixed at the un-defended operating point);
+    #   * only beta;
+    #   * only the calibration knob (for saturation / LO).
+    # All four curves come from the same set of runs (no extra simulation).
+    print("\n[5] Recovery strategy comparison (all params vs single param) ...")
+    OPT_ALPHA, OPT_BETA = 2.0, 0.95          # un-defended operating point
+    R_ALPHA = [1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0]
+    R_BETA = [0.90, 0.92, 0.95, 0.98, 1.0]
+    # calibration grid; the FIRST value is the un-defended (attack) setting.
+    R_CALIB = {
+        "saturation":       ("saturation_level", [2.0, 4.0, 8.0, 1e9]),
+        "lo":               ("scale", [0.85, 0.92, 0.97, 1.0]),
+        "intercept_resend": (None, [None]),
+        "collective":       (None, [None]),
+    }
+
+    for key, atk in ATTACKS.items():
+        cname, cvals = R_CALIB[key]
+        nodef = cvals[0]
+        # run every combo once, cache its K_beta curve
+        kb = {}  # (alpha, beta, calib) -> {dist: K_beta}
+        combos = list(itertools.product(R_ALPHA, R_BETA, cvals))
+        print(f"    {key}: {len(combos)} combos ...")
+        for (alpha, beta, calib) in combos:
+            base = dict(OPT); base["alpha"] = alpha; base["beta"] = beta
+            base["N"] = SEARCH_N
+            atk_obj = dict(atk)
+            if cname is not None:
+                atk_obj[cname] = calib
+                if cname == "saturation_level":
+                    base["saturation_level"] = calib
+            tag = f"rs_{key}_a{alpha}_b{beta}_c{calib}"
+            rows = run_cfg(make_cfg(f"rs_{key}", base, DISTANCES, atk_obj), tag)
+            kb[(alpha, beta, calib)] = {d: rows_to_curve(rows)[d]["K_beta"]
+                                        for d in DISTANCES}
+
+        def best(pred):
+            return {d: max(c[d] for k_, c in kb.items() if pred(k_)) for d in DISTANCES}
+
+        curves = {
+            "K_attack": kb[(OPT_ALPHA, OPT_BETA, nodef)],
+            "K_alpha":  best(lambda k_: k_[1] == OPT_BETA and k_[2] == nodef),
+            "K_beta":   best(lambda k_: k_[0] == OPT_ALPHA and k_[2] == nodef),
+            "K_all":    best(lambda k_: True),
+        }
+        if cname is not None:
+            curves["K_calib"] = best(lambda k_: k_[0] == OPT_ALPHA and k_[1] == OPT_BETA)
+
+        order = ["K_attack", "K_alpha", "K_beta"] + \
+                (["K_calib"] if cname is not None else []) + ["K_all"]
+        path = os.path.join(OUTDIR, f"recovery_strategies_{key}.csv")
+        with open(path, "w", newline="") as f:
+            w = csv.writer(f)
+            w.writerow(["distance_km", "K_baseline", *order])
+            for d in DISTANCES:
+                w.writerow([d, base_curve[d]["K_beta"]] + [curves[c][d] for c in order])
+        print(f"      -> {os.path.basename(path)}")
+
     # --- Stage 4: one-at-a-time parameter sensitivity -----------------------
     # At a fixed reference distance, vary ONE knob at a time (others at optimal)
     # and record how each metric responds. This isolates the contribution of
