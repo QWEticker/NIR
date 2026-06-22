@@ -100,6 +100,42 @@ def sensitivity(attack):
     plt.close(fig)
 
 
+STRAT_STYLE = {
+    "K_baseline": ("Без атаки (baseline)",            "^-",   2.4),
+    "K_attack":   ("Под атакой (без восстановления)", "x:",   1.6),
+    "K_alpha":    (r"Подбор только $\alpha$",          "o--",  1.6),
+    "K_beta":     (r"Подбор только $\beta$",           "s--",  1.6),
+    "K_calib":    ("Подбор только калибровки",         "P--",  1.6),
+    "K_all":      ("Подбор ВСЕХ параметров",           "*-",   2.4),
+}
+STRAT_COLOR = {
+    "K_baseline": "black", "K_attack": "#7f7f7f", "K_alpha": "#1f77b4",
+    "K_beta": "#2ca02c", "K_calib": "#9467bd", "K_all": "#d62728",
+}
+
+
+def recovery_strategies(attack):
+    path = os.path.join(STUDY, f"recovery_strategies_{attack}.csv")
+    with open(path) as f:
+        rows = list(csv.DictReader(f))
+    d = [float(r["distance_km"]) for r in rows]
+    cols = [c for c in rows[0] if c != "distance_km"]
+    plt.figure(figsize=(8.5, 5.2))
+    for c in cols:
+        label, fmt, lw = STRAT_STYLE[c]
+        plt.plot(d, [float(r[c]) for r in rows], fmt, color=STRAT_COLOR[c],
+                 lw=lw, label=label, markersize=7 if c == "K_all" else 5)
+    plt.axhline(0, color="k", lw=0.6)
+    plt.xlabel("Расстояние, км")
+    plt.ylabel(r"$K_\beta$, бит / символ")
+    plt.title(f"Этап 3. Восстановление {LABELS[attack]}: все параметры vs один параметр")
+    plt.grid(alpha=0.3)
+    plt.legend()
+    plt.tight_layout()
+    plt.savefig(os.path.join(FIGS, f"recovery_strategies_{attack}.png"), dpi=140)
+    plt.close()
+
+
 def main():
     metric_vs_distance("T_hat", r"$\hat{T}$ (оценка трансмиссивности)",
                        "График 1. Оценка трансмиссивности $\\hat{T}$ vs расстояние",
@@ -115,6 +151,7 @@ def main():
                        "chi_vs_distance.png")
     for atk in ATTACKS:
         sensitivity(atk)
+        recovery_strategies(atk)
     print(f"Figures written to {FIGS}")
 
 
