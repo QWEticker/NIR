@@ -8,6 +8,7 @@ struct SecurityMetrics {
     double chi_BE;          ///< χ(B:E), граница Холево
     double K_asymptotic;    ///< I_AB - χ_BE
     double K_beta;          ///< β·I_AB - χ_BE  (практическая)
+    double xi_eff = 0.0;    ///< эффективный избыточный шум, вошедший в расчёт
     bool   secure() const noexcept { return K_beta > 0.0; }
 };
 

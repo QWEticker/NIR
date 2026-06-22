@@ -86,19 +86,20 @@ def run_cfg(cfg, tag):
         return list(csv.DictReader(f))
 
 
+CURVE_COLS = ("T_true", "T_hat", "xi_hat", "xi_eff", "I_AB", "chi_BE", "K_asymp", "K_beta")
+
+
 def rows_to_curve(rows):
     """dist -> dict of floats"""
     out = {}
     for r in rows:
-        out[float(r["distance_km"])] = {k: float(r[k]) for k in
-                                        ("T_true", "xi_hat", "I_AB", "chi_BE",
-                                         "K_asymp", "K_beta")}
+        out[float(r["distance_km"])] = {k: float(r[k]) for k in CURVE_COLS}
     return out
 
 
 def write_curve(path, dist_to_metrics, extra_cols=None):
     extra_cols = extra_cols or {}
-    cols = ["distance_km", "T_true", "xi_hat", "I_AB", "chi_BE", "K_asymp", "K_beta"]
+    cols = ["distance_km", *CURVE_COLS]
     ekeys = sorted({k for d in extra_cols.values() for k in d})
     with open(path, "w", newline="") as f:
         w = csv.writer(f)
@@ -182,6 +183,55 @@ def main():
         bp = best_params[d0]
         print(f"      best@{d0}km K_beta={best[d0]['K_beta']:.4f} "
               f"(baseline {base_curve[d0]['K_beta']:.4f}) params={bp}")
+
+    # --- Stage 4: one-at-a-time parameter sensitivity -----------------------
+    # At a fixed reference distance, vary ONE knob at a time (others at optimal)
+    # and record how each metric responds. This isolates the contribution of
+    # each parameter to the recovery searched in stage 3.
+    print("\n[4] Parameter sensitivity (one knob at a time) ...")
+    D_REF = 25.0
+    SWEEPS = {
+        "alpha": [1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0],
+        "beta":  [0.90, 0.92, 0.94, 0.95, 0.96, 0.98, 1.0],
+    }
+    CALIB_SWEEP = {
+        "saturation": ("saturation_level", [1.5, 2.0, 3.0, 4.0, 8.0, 1e9]),
+        "lo":         ("scale", [0.80, 0.85, 0.90, 0.95, 0.97, 1.0]),
+    }
+
+    def sweep_one(key, atk, pname, values, calib_name=None):
+        out = {}
+        for v in values:
+            base = dict(OPT)
+            base["N"] = SEARCH_N
+            atk_obj = dict(atk)
+            if pname in ("alpha", "beta"):
+                base[pname] = v
+            elif calib_name is not None:
+                atk_obj[calib_name] = v
+                if calib_name == "saturation_level":
+                    base["saturation_level"] = v
+            tag = f"sw_{key}_{pname}_{v}"
+            rows = run_cfg(make_cfg(f"sw_{key}", base, [D_REF], atk_obj), tag)
+            out[v] = rows_to_curve(rows)[D_REF]
+        return out
+
+    for key, atk in ATTACKS.items():
+        params = dict(SWEEPS)
+        if key in CALIB_SWEEP:
+            cname, cvals = CALIB_SWEEP[key]
+            params[cname] = cvals
+        for pname, values in params.items():
+            cname = CALIB_SWEEP[key][0] if (key in CALIB_SWEEP and pname == CALIB_SWEEP[key][0]) else None
+            res = sweep_one(key, atk, pname, values, cname)
+            path = os.path.join(OUTDIR, f"sweep_{key}_{pname}.csv")
+            with open(path, "w", newline="") as f:
+                w = csv.writer(f)
+                w.writerow([pname, *CURVE_COLS])
+                for v in values:
+                    m = res[v]
+                    w.writerow([v] + [m[c] for c in CURVE_COLS])
+            print(f"    {key}/{pname}: {len(values)} points @ {D_REF:.0f} km -> {os.path.basename(path)}")
 
     print(f"\nDone. CSVs written to {OUTDIR}")
 

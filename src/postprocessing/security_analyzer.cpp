@@ -60,6 +60,7 @@ SecurityMetrics SecurityAnalyzer::compute(double T, double xi, double V_A) const
     const double chi_tot  = chi_line + chi_het / T;
 
     SecurityMetrics m{};
+    m.xi_eff       = xi;
     m.I_AB         = std::max(0.0, std::log2((V + chi_tot) / (1.0 + chi_tot)));
     m.chi_BE       = holevo_bound(T, xi, V_A);
     m.K_asymptotic = std::max(0.0, m.I_AB - m.chi_BE);
