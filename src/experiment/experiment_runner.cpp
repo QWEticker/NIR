@@ -8,10 +8,10 @@
 #include "attacks/lo_manipulation_attack.hpp"
 #include "attacks/intercept_resend_attack.hpp"
 #include "attacks/collective_attack.hpp"
-#include "attacks/entangling_cloner_model.cpp"
-#include "attacks/intercept_resend_model.cpp"
-#include "attacks/lo_manipulation_model.cpp"
-#include "attacks/saturation_model.cpp"
+#include "attacks/collective_model.hpp"
+#include "attacks/intercept_resend_model.hpp"
+#include "attacks/lo_manipulation_model.hpp"
+#include "attacks/saturation_model.hpp"
 #include "json.hpp"
 #include <chrono>
 #include <iostream>
@@ -68,8 +68,7 @@ ExperimentRunner::ExperimentRunner(ExperimentConfig c,
                 try { auto pj = json::parse(params); if (pj.contains("coupling")) coupling = pj.at("coupling"); if (pj.contains("excess_noise")) excess = pj.at("excess_noise"); } catch(...) {}
             }
             attach_attack(std::make_unique<CollectiveAttack>(coupling, excess, cfg_.base.seed + 2000));
-            // For analytic model use entangling cloner with extra xi = excess
-            attack_models_.push_back(std::make_unique<EntanglingClonerModel>(excess));
+            attack_models_.push_back(std::make_unique<CollectiveModel>(coupling, excess));
             attack_names_.push_back("collective");
             attack_params_.push_back(params);
         } else if (name == "none") {
@@ -122,42 +121,16 @@ void ExperimentRunner::run_one_point(double dist, const std::string& scenario) {
     e.T_hat   = std::clamp(e.T_hat, 0.01, 1.0);
     e.xi_hat  = std::max(0.0, e.xi_hat);
 
-    // Apply analytical attack models cumulatively for security analysis
+    // Эффективный избыточный шум: оценка из данных плюс аналитический вклад атак.
     double xi_effective = e.xi_hat;
-    Eigen::Matrix4d custom_cm = Eigen::Matrix4d::Zero();
-    bool have_custom_cm = false;
     for (size_t i = 0; i < attack_models_.size(); ++i) {
         const auto& am = attack_models_[i];
         if (!am) continue;
         auto ar = am->computeEffect(pc.T, mod.modulation_variance(), e.xi_hat);
         if (ar.type == cvqkd::AttackResultType::XiAdd) xi_effective += ar.xi_add;
-        else if (ar.type == cvqkd::AttackResultType::Covariance) {
-            custom_cm = ar.modified_cm;
-            have_custom_cm = true;
-        }
     }
 
-    // Compute security metrics: if custom CM available compute chi from CM, otherwise use sec.compute with xi_effective
-    SecurityMetrics m{};
-    if (have_custom_cm) {
-        // compute chi from provided CM using HolevoCalculator (in nim namespace)
-        // HolevoCalculator is under nir namespace, include via header
-        double chi = nir::HolevoCalculator::computeHolevoFromCM(custom_cm);
-        // compute I_AB using standard SNR approximation
-        // Detector referred noise approx: v_det ~= v_el / eta
-        double v_det = pc.v_el / std::max(1e-12, pc.eta);
-        double signal = pc.T * mod.modulation_variance();
-        double noise = 1.0 + pc.T * xi_effective + v_det;
-        double snr = (noise > 0.0) ? signal / noise : 0.0;
-        double Iab = SecurityAnalyzer::mutual_info(snr);
-
-        m.I_AB = Iab;
-        m.chi_BE = chi;
-        m.K_asymptotic = std::max(0.0, m.I_AB - m.chi_BE);
-        m.K_beta = std::max(0.0, pc.beta * m.I_AB - m.chi_BE);
-    } else {
-        m = sec.compute(pc.T, xi_effective, mod.modulation_variance());
-    }
+    SecurityMetrics m = sec.compute(pc.T, xi_effective, mod.modulation_variance());
 
     auto t1 = std::chrono::steady_clock::now();
     const double ms = std::chrono::duration<double, std::milli>(t1 - t0).count();

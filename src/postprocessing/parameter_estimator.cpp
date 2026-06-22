@@ -12,64 +12,36 @@ ChannelEstimate ParameterEstimator::estimate(const VectorR& x, const VectorR& y)
     const Eigen::Index n = x.size();
     if (n < 2) return ChannelEstimate{};
 
-    // Модель гетеродина: y = sqrt(T)*x + noise
-    // Оцениваем общий коэффициент передачи из линейной регрессии
+    // Линейная модель измерения (на квадратуру): y = sqrt(eta*T)*x + n,
+    // где n = sqrt(eta)*n_канал + n_детектор и
+    //   Var(n) = eta*(T*xi/2) + (1 + v_el)/eta.
+    // Здесь x — амплитуда Алисы (до канала), y — отсчёт гетеродина.
     const double xx = x.squaredNorm();
     const double xy = x.dot(y);
-    const double sqrtT_hat = xy / xx;
-    const VectorR resid = y - sqrtT_hat * x;
-    
-    // Дисперсия остатков (шум на выходе детектора на одну квадратуру)
+    const double slope = xy / xx;            // оценка sqrt(eta*T)
+    const VectorR resid = y - slope * x;
+
+    // Дисперсия остатков (полный шум на выходе детектора на одну квадратуру).
     const double sigma2_out = resid.squaredNorm() / static_cast<double>(n - 1);
-    
-    const double T_hat = sqrtT_hat * sqrtT_hat;
-    
-    // Корректная оценка избыточного шума xi, приведённого ко входу канала.
-    // Полный шум на выходе детектора (в SNU): sigma2_out = eta * T * (1 + xi + v_vac) + v_el + v_vac_shot
-    // Для гетеродина вакуумный шум вакуума = 1 (в SNU). 
-    // Упрощённая модель шума на выходе: sigma2_out ≈ eta * T * (1 + xi) + v_el + 1 (shot noise of LO)
-    // Однако в нашей модели QuantumChannel добавляет шум ДО детектора, а детектор добавляет свой шум.
-    // Вернёмся к определению: xi — это избыточный шум канала (в SNU на входе).
-    // Шум на выходе Bob: Var(n_out) = T * eta * (1 + xi) + v_el + (1-eta)*T + 1? 
-    // Используем стандартную линеаризацию для калибровки:
-    // sigma2_out = T * eta * (1 + xi) + v_el + 1 (если LO мощный, shot noise = 1)
-    // => T * eta * xi = sigma2_out - T * eta - v_el - 1
-    // => xi = (sigma2_out - 1 - v_el - T*eta) / (T*eta)
-    // Примечание: В данной реализации предполагается, что sigma2_out измерен относительно нормированных единиц.
-    // Если модель детектора в HeterodyneDetector уже включает shot noise (vacuum=1), то:
-    // sigma2_out = T * eta * (1 + xi) + v_el + (1-T)*eta (потери) ... упростим до стандартной формы:
-    // sigma2_total_input_referred = (sigma2_out - v_el - 1) / (eta * T)
-    // xi_hat = sigma2_total_input_referred - 1 (вакуум) - (1-T)/T (потери квантовые)
-    // Но проще через полный бюджет шума:
-    // xi_hat = (sigma2_out - 1.0 - cfg_.v_el) / (cfg_.eta * std::max(T_hat, 1e-6)) - 1.0 - (1.0 - T_hat)/T_hat;
-    // Стоп, учтём, что в канале шум добавляется как T*xi.
-    // Правильная формула инверсии бюджета шума для гетеродина:
-    // xi_hat = (sigma2_out - 1.0 - cfg_.v_el) / (cfg_.eta * std::max(T_hat, 1e-6)) - 1.0; 
-    // (Здесь 1.0 — это вакуумный шум, который всегда есть на входе детектора даже при идеальном канале)
-    // Дополнительно нужно вычесть шум потерь канала (1-T)/T? Нет, xi определяется как ДОПОЛНИТЕЛЬНЫЙ шум сверх потерь.
-    // Стандартная формула: chi_tot = (1-T)/T + xi + (1+v_el)/(eta*T).
-    // Измеренный шум на выходе (нормированный на вход): chi_meas = sigma2_out / T_hat.
-    // Тогда xi_hat = chi_meas - (1-T)/T - (1+v_el)/(eta*T) - 1 (vacuum)?
-    // Давайте используем прямую инверсию из модели детектора, если бы мы её знали точно.
-    // Для универсальности используем оценку: xi_hat = (sigma2_out - 1.0 - cfg_.v_el) / (cfg_.eta * T_hat) - 1.0;
-    // Если результат отрицательный (шум меньше вакуумного из-за статистики), обнуляем.
-    
-    // Уточненная формула с учетом того, что в канале шум xi добавляется к сигналу, 
-    // а потери (1-T) заменяются на вакуум.
-    // Полный шум на входе Боба (перед детектором): 1 (вакуум) + xi (избыточный)
-    // После канала с потерями T: T*(1+xi) + (1-T)*1 = 1 + T*xi
-    // После детектора с eta и v_el: eta*(1 + T*xi) + v_el + 1 (shot noise гетеродина)
-    // Итого: sigma2_out = eta + eta*T*xi + v_el + 1
-    // Отсюда: eta*T*xi = sigma2_out - eta - v_el - 1
-    // xi = (sigma2_out - 1.0 - cfg_.v_el - cfg_.eta) / (cfg_.eta * T_hat)
-    
-    const double numerator = sigma2_out - 1.0 - cfg_.v_el - cfg_.eta;
-    const double denominator = cfg_.eta * std::max(T_hat, 1e-9);
-    const double xi_hat = std::max(0.0, numerator / denominator);
+
+    // Детектор откалиброван: eta и v_el известны. Восстанавливаем T канала.
+    // slope^2 = eta*T  =>  T_hat = slope^2 / eta.
+    const double eta = std::max(1e-12, cfg_.eta);
+    const double T_hat = (slope * slope) / eta;
+
+    // Инверсия бюджета шума для избыточного шума канала xi (полный, SNU):
+    //   sigma2_out = eta*(T*xi/2) + (1 + v_el)/eta
+    //   => eta*T*xi/2 = sigma2_out - (1 + v_el)/eta
+    //   => xi = 2*(sigma2_out - (1 + v_el)/eta) / (eta*T) = 2*(...) / slope^2
+    const double det_noise = (1.0 + cfg_.v_el) / eta;          // (1+v_el)/eta
+    const double channel_noise_out = sigma2_out - det_noise;   // = eta*T*xi/2
+    const double slope2 = std::max(1e-12, slope * slope);
+    const double xi_hat = std::max(0.0, 2.0 * channel_noise_out / slope2);
 
     // Доверительные интервалы (асимптотические, 95%)
     const double z = (conf_ > 0.99) ? 2.576 : 1.96;
-    const double se_T = 2.0 * std::abs(sqrtT_hat) * std::sqrt(sigma2_out / xx);
+    // T_hat = slope^2/eta  =>  se_T = 2*|slope|*se_slope/eta, se_slope = sqrt(sigma2_out/xx).
+    const double se_T = (2.0 * std::abs(slope) * std::sqrt(sigma2_out / xx)) / eta;
     
     ChannelEstimate e{};
     e.T_hat            = T_hat;

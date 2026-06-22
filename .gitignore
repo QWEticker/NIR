@@ -1,2 +1,12 @@
 # Documentation
 ATTACKS_MODULE_DOCUMENTATION.md
+# Build directories
+build/
+build-mingw/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Study scratch configs
+results/study/_tmp/
