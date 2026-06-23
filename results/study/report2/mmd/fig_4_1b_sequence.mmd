@@ -1,0 +1,25 @@
+sequenceDiagram
+    participant R as ExperimentRunner
+    participant M as QPSKModulator
+    participant C as QuantumChannel
+    participant D as HeterodyneDetector
+    participant A as IAttack (sat/LO)
+    participant E as ParameterEstimator
+    participant AM as IAttackModel
+    participant S as SecurityAnalyzer
+    participant L as StatisticsLogger
+    R->>M: generate(N)
+    M-->>R: AliceSignal {keys, amplitudes}
+    R->>C: transmit(amplitudes)
+    C-->>R: bob_in (√T·a + шум)
+    R->>D: measure(bob_in)
+    D-->>R: Measurement {X, P}
+    R->>A: apply(meas)
+    A-->>R: искажённые X, P
+    R->>E: estimate(xA, yB)
+    E-->>R: ChannelEstimate {T̂, ξ̂, ДИ}
+    R->>AM: computeEffect(T, V_A, ξ̂)
+    AM-->>R: AttackResult {ξ_add}
+    R->>S: compute(T, ξ_eff, V_A)
+    S-->>R: SecurityMetrics {I_AB, χ_BE, K_β}
+    R->>L: log(scenario, d, ...)

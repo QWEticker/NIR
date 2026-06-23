@@ -1,0 +1,14 @@
+flowchart TD
+    CMAKE["CMake ≥ 3.8<br/>C++17, /O2 или -O3"]
+    EIGEN["Eigen 3<br/>(header-only, extern/)"]
+    JSON["nlohmann/json<br/>(header-only, extern/)"]
+    GTEST["GoogleTest 1.14.0<br/>(FetchContent)"]
+    LIB["cvqkd_lib<br/>(статическая библиотека)"]
+    SIM["cvqkd_sim<br/>(исполняемый файл)"]
+    TESTS["cvqkd_tests<br/>(модульные тесты)"]
+    CMAKE --> LIB
+    EIGEN --> LIB
+    JSON --> LIB
+    LIB --> SIM
+    LIB --> TESTS
+    GTEST --> TESTS

@@ -1,0 +1,16 @@
+flowchart TD
+    IN["Вход: T, ξ_eff, V_A = α²"] --> V["V = V_A + 1"]
+    IN --> CHET["χ_het = (2−η+2v_el)/η"]
+    IN --> CLINE["χ_line = (1−T)/T + ξ_eff"]
+    CHET --> CTOT["χ_tot = χ_line + χ_het/T"]
+    CLINE --> CTOT
+    V --> IAB["I_AB = log₂((V+χ_tot)/(1+χ_tot))"]
+    CTOT --> IAB
+    V --> CM["Ковариационная матрица Γ_AB"]
+    CLINE --> CM
+    CHET --> CM
+    CM --> NU["Симплектические с.з.<br/>ν₁,ν₂,ν₃,ν₄"]
+    NU --> CHIBE["χ_BE = G(ν₁)+G(ν₂)−G(ν₃)−G(ν₄)"]
+    IAB --> KB["K_β = max(0, β·I_AB − χ_BE)"]
+    CHIBE --> KB
+    KB --> SEC["secure ≡ (K_β &gt; 0)"]

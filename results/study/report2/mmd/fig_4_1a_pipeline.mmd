@@ -1,0 +1,12 @@
+flowchart TD
+    A["JSON-конфиг → ProtocolConfig"] --> B["T(L) = 10^(−0.2·L/10)"]
+    B --> C["QPSKModulator.generate(N)<br/>(Алиса: a = α·iᵏ)"]
+    C --> D["QuantumChannel.transmit<br/>(×√T, шум T·ξ/2)"]
+    D --> E["HeterodyneDetector.measure<br/>(×√η, шум (1+v_el)/η)"]
+    E --> F{"Атаки подключены?"}
+    F -- "да" --> G["IAttack.apply(meas)<br/>насыщение / LO"]
+    F -- "нет" --> H
+    G --> H["ParameterEstimator.estimate<br/>(T̂, ξ̂, ДИ)"]
+    H --> I["ξ_eff = ξ̂ + Σ IAttackModel.computeEffect"]
+    I --> J["SecurityAnalyzer.compute<br/>(I_AB, χ_BE, K_asymp, K_β)"]
+    J --> K["StatisticsLogger.log<br/>(строка CSV)"]

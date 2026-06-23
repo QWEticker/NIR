@@ -1,0 +1,6 @@
+{
+  "theme": "default",
+  "securityLevel": "loose",
+  "flowchart": { "htmlLabels": true, "curve": "basis" },
+  "themeVariables": { "fontFamily": "Segoe UI, Arial, DejaVu Sans, sans-serif" }
+}

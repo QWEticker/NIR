@@ -1,0 +1,24 @@
+flowchart TB
+    subgraph L3["Слой исследований (Python)"]
+        P1["run_study.py<br/>оркестрация серий"]
+        P2["make_plots.py / make_extra_plots.py<br/>визуализация"]
+    end
+    subgraph L2["Драйвер (C++)"]
+        D1["main.cpp<br/>--config / --out"]
+        D2["ExperimentRunner<br/>run() / run_one_point()"]
+    end
+    subgraph L1["Ядро симуляции (cvqkd_lib, C++17)"]
+        C1["protocol/<br/>Modulator, Channel, Detector"]
+        C2["postprocessing/<br/>Estimator, SecurityAnalyzer"]
+        C3["attacks/<br/>IAttack / IAttackModel"]
+        C4["ximax/<br/>XiMaxSolver, Holevo"]
+    end
+    JSON["experiments/*.json"] --> D1
+    D1 --> D2
+    D2 --> C1
+    D2 --> C2
+    D2 --> C3
+    D2 --> CSV["results/*.csv"]
+    P1 --> D1
+    CSV --> P2
+    P2 --> PNG["figures/*.png"]

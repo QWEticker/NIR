@@ -1,0 +1,80 @@
+classDiagram
+    direction TB
+    class IAttack {
+        <<interface>>
+        +apply(Measurement& m) void
+        +name() string
+    }
+    class IAttackModel {
+        <<interface>>
+        +computeEffect(T, V_A, xi_in) AttackResult
+        +name() string
+    }
+    class AttackResult {
+        +AttackResultType type
+        +double xi_add
+        +Matrix4d modified_cm
+    }
+    class AttackResultType {
+        <<enumeration>>
+        XiAdd
+        Covariance
+    }
+    class SaturationAttack {
+        -double sat_
+        -double gain_
+        +apply(Measurement&)
+    }
+    class LOManipulationAttack {
+        -double scale_
+        +apply(Measurement&)
+    }
+    class InterceptResendAttack {
+        -double meas_eff_
+        -double resend_gain_
+        -RNG rng_
+        +apply(Measurement&)
+    }
+    class CollectiveAttack {
+        -double coupling_
+        -double excess_
+        -RNG rng_
+        +apply(Measurement&)
+    }
+    class SaturationModel {
+        -double sat_
+        -double gain_
+        +computeEffect() AttackResult
+    }
+    class LOManipulationModel {
+        -double scale_
+        +computeEffect() AttackResult
+    }
+    class InterceptResendModel {
+        -double meas_eff_
+        -double resend_gain_
+        +computeEffect() AttackResult
+    }
+    class CollectiveModel {
+        -double coupling_
+        -double excess_
+        +computeEffect() AttackResult
+    }
+    class EntanglingClonerModel {
+        -double T_
+        -double xi_
+        +computeEffect() AttackResult
+    }
+    IAttack <|.. SaturationAttack
+    IAttack <|.. LOManipulationAttack
+    IAttack <|.. InterceptResendAttack
+    IAttack <|.. CollectiveAttack
+    IAttackModel <|.. SaturationModel
+    IAttackModel <|.. LOManipulationModel
+    IAttackModel <|.. InterceptResendModel
+    IAttackModel <|.. CollectiveModel
+    IAttackModel <|.. EntanglingClonerModel
+    IAttackModel ..> AttackResult : returns
+    AttackResult ..> AttackResultType
+    SaturationAttack .. SaturationModel : пара
+    LOManipulationAttack .. LOManipulationModel : пара

@@ -1,0 +1,36 @@
+flowchart TB
+    subgraph EXT["Внешние зависимости (extern/, FetchContent)"]
+        E1["Eigen 3<br/>линейная алгебра"]
+        E2["nlohmann/json<br/>конфигурация"]
+        E3["GoogleTest 1.14<br/>модульные тесты"]
+    end
+    subgraph LIB["cvqkd_lib (статическая библиотека C++17)"]
+        direction TB
+        M1["protocol<br/>QPSKModulator · QuantumChannel<br/>HeterodyneDetector · PhaseDiscretizer"]
+        M2["postprocessing<br/>ParameterEstimator<br/>SecurityAnalyzer · Reconciliation"]
+        M3["attacks<br/>IAttack / IAttackModel + реализации"]
+        M4["core<br/>config · types · rng · constants"]
+        M5["ximax<br/>решатель критического шума"]
+    end
+    subgraph APP["Исполняемые цели CMake"]
+        A1["cvqkd_sim<br/>(main.cpp + ExperimentRunner)"]
+        A2["cvqkd_tests<br/>(7 наборов тестов)"]
+    end
+    subgraph PY["Слой исследований (Python 3)"]
+        Y1["run_study.py<br/>оркестрация серий"]
+        Y2["make_plots / make_extra_plots / make_physics_figs"]
+    end
+    CFG["experiments/*.json"] --> A1
+    A1 --> LIB
+    A2 --> LIB
+    M1 --> M4
+    M2 --> M4
+    M3 --> M4
+    M2 --> M5
+    E1 --> LIB
+    E2 --> LIB
+    E3 --> A2
+    A1 --> OUT["results/study/*.csv"]
+    Y1 --> A1
+    OUT --> Y2
+    Y2 --> FIG["figures/*.png"]

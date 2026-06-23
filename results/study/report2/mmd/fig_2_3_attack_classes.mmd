@@ -1,0 +1,41 @@
+classDiagram
+    class IAttack {
+        <<interface>>
+        +apply(Measurement& m) void
+        +name() string
+    }
+    class IAttackModel {
+        <<interface>>
+        +computeEffect(T, V_A, xi_in) AttackResult
+        +name() string
+    }
+    class AttackResult {
+        +AttackResultType type
+        +double xi_add
+        +Matrix4d modified_cm
+    }
+    class SaturationAttack {
+        -double sat_
+        -double gain_
+        +apply(Measurement&)
+    }
+    class SaturationModel {
+        -double sat_
+        -double gain_
+        +computeEffect() AttackResult
+    }
+    class LOManipulationAttack {
+        -double scale_
+        +apply(Measurement&)
+    }
+    class LOManipulationModel {
+        -double scale_
+        +computeEffect() AttackResult
+    }
+    IAttack <|.. SaturationAttack
+    IAttack <|.. LOManipulationAttack
+    IAttackModel <|.. SaturationModel
+    IAttackModel <|.. LOManipulationModel
+    IAttackModel ..> AttackResult : returns
+    SaturationAttack .. SaturationModel : пара симуляция/аналитика
+    LOManipulationAttack .. LOManipulationModel : пара симуляция/аналитика
