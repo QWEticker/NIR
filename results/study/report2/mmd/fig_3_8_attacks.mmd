@@ -1,0 +1,12 @@
+flowchart TD
+    subgraph SAT["Атака насыщения детектора"]
+        S1["Отсчёты X, P"] --> S2["clip(gain·x, ±sat)"]
+        S2 --> S3["ξ_add = max(0, (V−sat²)/V)"]
+    end
+    subgraph LOA["Атака манипуляции LO"]
+        L1["Отсчёты X, P"] --> L2["масштаб X,P ← s·X, s·P"]
+        L2 --> L3["ξ_add = max(0, 1/s² − 1)"]
+    end
+    S3 --> XE["ξ_eff = ξ̂ + Σ ξ_add"]
+    L3 --> XE
+    XE --> CH["рост χ_BE → падение K_β"]

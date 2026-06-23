@@ -1,0 +1,11 @@
+flowchart TD
+    CFG["JSON: attacks + params"] --> FAC["ExperimentRunner<br/>(фабрика по имени)"]
+    FAC --> SIMO["IAttack<br/>(симуляция)"]
+    FAC --> ANO["IAttackModel<br/>(аналитика)"]
+    MEAS["Measurement {X, P}"] --> SIMO
+    SIMO --> MEAS2["искажённые X, P"]
+    MEAS2 --> EST["ParameterEstimator<br/>(влияет на T̂, ξ̂)"]
+    ANO --> XADD["ξ_add"]
+    EST --> XEFF["ξ_eff = ξ̂ + Σ ξ_add"]
+    XADD --> XEFF
+    XEFF --> SEC["SecurityAnalyzer<br/>(χ_BE, K_β)"]

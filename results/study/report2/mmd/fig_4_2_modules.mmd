@@ -1,0 +1,17 @@
+flowchart TD
+    EXP["experiment/<br/>ExperimentRunner, StatisticsLogger"]
+    PROT["protocol/<br/>QPSKModulator, QuantumChannel,<br/>HeterodyneDetector, PhaseDiscretizer"]
+    POST["postprocessing/<br/>ParameterEstimator, SecurityAnalyzer, Reconciliation"]
+    ATK["attacks/<br/>IAttack, IAttackModel + sat/LO"]
+    CORE["core/<br/>ProtocolConfig, RNG, types, constants"]
+    XIMAX["ximax/ (ns nir)<br/>XiMaxSolver, HolevoCalculator, FiniteKeyAnalyzer"]
+    EXT["extern/<br/>Eigen, nlohmann/json"]
+    EXP --> PROT
+    EXP --> POST
+    EXP --> ATK
+    PROT --> CORE
+    POST --> CORE
+    ATK --> CORE
+    POST --> XIMAX
+    CORE --> EXT
+    POST --> EXT

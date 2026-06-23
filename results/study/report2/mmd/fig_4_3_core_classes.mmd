@@ -1,0 +1,47 @@
+classDiagram
+    class ProtocolConfig {
+        +double alpha
+        +double T, xi, distance_km
+        +double eta, v_el, saturation_level
+        +double beta
+        +size_t N
+        +uint64_t seed
+        +recompute_T_from_distance()
+    }
+    class QPSKModulator {
+        -double alpha_
+        -RNG rng_
+        +generate(N) AliceSignal
+        +modulation_variance() double
+    }
+    class QuantumChannel {
+        -ProtocolConfig cfg_
+        +transmit(alice) vector~Complex~
+    }
+    class HeterodyneDetector {
+        -ProtocolConfig cfg_
+        +measure(in) Measurement
+        +detector_noise_variance() double
+    }
+    class ParameterEstimator {
+        +estimate(xA, yB) ChannelEstimate
+    }
+    class SecurityAnalyzer {
+        +compute(T, xi, V_A) SecurityMetrics
+        +holevo_bound(T, xi, V_A) double
+    }
+    class ExperimentRunner {
+        -ExperimentConfig cfg_
+        -vector~IAttack~ attacks_
+        -vector~IAttackModel~ attack_models_
+        +run()
+        +run_one_point(d, scenario)
+    }
+    ExperimentRunner --> QPSKModulator
+    ExperimentRunner --> QuantumChannel
+    ExperimentRunner --> HeterodyneDetector
+    ExperimentRunner --> ParameterEstimator
+    ExperimentRunner --> SecurityAnalyzer
+    QPSKModulator ..> ProtocolConfig
+    QuantumChannel ..> ProtocolConfig
+    HeterodyneDetector ..> ProtocolConfig

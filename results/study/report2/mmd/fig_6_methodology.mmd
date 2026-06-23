@@ -1,0 +1,12 @@
+flowchart LR
+    ST1["Стадия 1<br/>Baseline<br/>optimal.json"] --> ST2["Стадия 2<br/>Атаки<br/>sat / LO"]
+    ST2 --> ST3["Стадия 3<br/>Восстановление<br/>перебор α, β, калибровки"]
+    ST3 --> ST4["Стадия 4<br/>Чувствительность<br/>по одному параметру (L=25 км)"]
+    ST1 --> OUT1["baseline.csv"]
+    ST2 --> OUT2["attack_*.csv"]
+    ST3 --> OUT3["recovered_*.csv"]
+    ST4 --> OUT4["sweep_*.csv"]
+    OUT1 --> PLOT["Графики (Matplotlib)"]
+    OUT2 --> PLOT
+    OUT3 --> PLOT
+    OUT4 --> PLOT
