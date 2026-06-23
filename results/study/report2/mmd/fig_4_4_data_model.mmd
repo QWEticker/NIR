@@ -1,0 +1,40 @@
+classDiagram
+    direction LR
+    class AliceSignal {
+        +vector~uint8_t~ keys
+        +vector~Complex~ amplitudes
+    }
+    class Measurement {
+        +VectorR X
+        +VectorR P
+        +size() size_t
+    }
+    class ChannelEstimate {
+        +double T_hat
+        +double T_ci_half
+        +double xi_hat
+        +double xi_ci_half
+        +double sigma2_residual
+        +size_t n_samples
+    }
+    class SecurityMetrics {
+        +double xi_eff
+        +double I_AB
+        +double chi_BE
+        +double K_asymptotic
+        +double K_beta
+        +secure() bool
+    }
+    class TypesAlias {
+        <<typedefs>>
+        Complex = complex~double~
+        VectorR = Eigen::VectorXd
+        VectorCd = Eigen::VectorXcd
+        MatrixR = Eigen::MatrixXd
+    }
+    AliceSignal ..> TypesAlias : Complex
+    Measurement ..> TypesAlias : VectorR
+    note for AliceSignal "выход QPSKModulator::generate"
+    note for Measurement "выход HeterodyneDetector::measure"
+    note for ChannelEstimate "выход ParameterEstimator::estimate"
+    note for SecurityMetrics "выход SecurityAnalyzer::compute"

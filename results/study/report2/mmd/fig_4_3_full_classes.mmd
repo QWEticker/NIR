@@ -1,0 +1,87 @@
+classDiagram
+    direction LR
+    class ProtocolConfig {
+        +double alpha
+        +double T
+        +double xi
+        +double distance_km
+        +double eta
+        +double v_el
+        +double saturation_level
+        +double beta
+        +size_t N
+        +uint64_t seed
+        +recompute_T_from_distance() void
+    }
+    class ExperimentConfig {
+        +string name
+        +ProtocolConfig base
+        +vector~double~ distances_km
+        +vector~string~ attacks
+        +vector~string~ attack_params_json
+        +size_t runs_per_point
+        +from_json_file(path)$ ExperimentConfig
+    }
+    class QPSKModulator {
+        -double alpha_
+        -RNG rng_
+        +generate(N) AliceSignal
+        +modulation_variance() double
+    }
+    class QuantumChannel {
+        -ProtocolConfig cfg_
+        -RNG rng_
+        +transmit(alice) vector~Complex~
+    }
+    class HeterodyneDetector {
+        -ProtocolConfig cfg_
+        -RNG rng_
+        +measure(in) Measurement
+        +detector_noise_variance() double
+    }
+    class PhaseDiscretizer {
+        -size_t bins_=4
+        +discretize(Measurement) vector~size_t~
+    }
+    class ParameterEstimator {
+        -ProtocolConfig cfg_
+        -double conf_
+        +estimate(xA, yB) ChannelEstimate
+    }
+    class SecurityAnalyzer {
+        -ProtocolConfig cfg_
+        +compute(T, xi, V_A) SecurityMetrics
+        +holevo_bound(T, xi, V_A) double
+        +mutual_info(SNR)$ double
+    }
+    class Reconciliation {
+        -double beta_
+        +run(a, b) Result
+    }
+    class ExperimentRunner {
+        -ExperimentConfig cfg_
+        -shared_ptr~StatisticsLogger~ logger_
+        -vector~IAttack~ attacks_
+        -vector~IAttackModel~ attack_models_
+        +run() void
+        +run_one_point(d, scenario) void
+        +attach_attack(IAttack) void
+    }
+    class StatisticsLogger {
+        -ofstream out_
+        +log(...) void
+        +write_header() void
+    }
+    ExperimentRunner --> QPSKModulator : создаёт
+    ExperimentRunner --> QuantumChannel : создаёт
+    ExperimentRunner --> HeterodyneDetector : создаёт
+    ExperimentRunner --> ParameterEstimator : создаёт
+    ExperimentRunner --> SecurityAnalyzer : создаёт
+    ExperimentRunner --> StatisticsLogger : пишет
+    ExperimentRunner o-- IAttack
+    ExperimentRunner o-- IAttackModel
+    ExperimentConfig *-- ProtocolConfig
+    QuantumChannel ..> ProtocolConfig
+    HeterodyneDetector ..> ProtocolConfig
+    ParameterEstimator ..> ProtocolConfig
+    SecurityAnalyzer ..> ProtocolConfig
