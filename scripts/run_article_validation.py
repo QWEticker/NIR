@@ -292,6 +292,7 @@ def main():
     references = {row["case_id"]: row for row in reference_rows}
     raw_rows = []
     simulator_summaries = []
+    simulator_artifacts = []
     for case_index, case in enumerate(cases):
         parameters = merged_case(document, case)
         case_seed = base_seed + case_index * 1_000_003
@@ -312,6 +313,7 @@ def main():
             ],
             check=True,
         )
+        simulator_artifacts.extend((config_path, output_path))
         rows = read_csv(output_path)
         raw_rows.extend(rows)
         simulator_summaries.append(
@@ -335,6 +337,7 @@ def main():
         oracle_dir / "independent_runs.csv",
         oracle_dir / "independent_summary.csv",
         oracle_dir / "manifest.json",
+        *simulator_artifacts,
         raw_path,
         summary_path,
         comparison_path,
