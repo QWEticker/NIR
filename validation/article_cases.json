@@ -1,0 +1,118 @@
+{
+  "schema_version": 1,
+  "campaign": {
+    "samples": 100000,
+    "repeats": 200,
+    "seed": 20260915,
+    "confidence_level": 0.95
+  },
+  "base": {
+    "alpha": 0.5,
+    "T": 0.6,
+    "xi": 0.01,
+    "eta": 0.6,
+    "v_el": 0.05,
+    "beta": 0.95,
+    "saturation_level": null
+  },
+  "cases": [
+    {
+      "id": "ir_identity",
+      "attack": "intercept_resend",
+      "eve_mode": "ideal",
+      "fraction": 0.0,
+      "resend_gain": 1.0,
+      "publication": false
+    },
+    {
+      "id": "ir_ideal_full",
+      "attack": "intercept_resend",
+      "eve_mode": "ideal",
+      "fraction": 1.0,
+      "resend_gain": 1.0,
+      "publication": true
+    },
+    {
+      "id": "ir_real_full",
+      "attack": "intercept_resend",
+      "eve_mode": "real",
+      "fraction": 1.0,
+      "resend_gain": 1.0,
+      "publication": true
+    },
+    {
+      "id": "ir_gain_anchor",
+      "attack": "intercept_resend",
+      "eve_mode": "physical",
+      "meas_eff": 0.6,
+      "eve_v_el": 0.05,
+      "fraction": 1.0,
+      "resend_gain": 0.8,
+      "publication": true
+    },
+    {
+      "id": "ir_partial_gain",
+      "attack": "intercept_resend",
+      "eve_mode": "physical",
+      "meas_eff": 0.6,
+      "eve_v_el": 0.05,
+      "fraction": 0.5,
+      "resend_gain": 1.2,
+      "publication": true
+    },
+    {
+      "id": "ir_oracle_control",
+      "attack": "intercept_resend",
+      "eve_mode": "oracle",
+      "fraction": 1.0,
+      "resend_gain": 1.0,
+      "publication": false
+    },
+    {
+      "id": "ir_zero_resend",
+      "attack": "intercept_resend",
+      "eve_mode": "ideal",
+      "fraction": 1.0,
+      "resend_gain": 0.0,
+      "publication": false
+    },
+    {
+      "id": "collective_identity",
+      "attack": "collective",
+      "coupling": 0.0,
+      "excess_noise": 0.0,
+      "publication": false
+    },
+    {
+      "id": "collective_anchor",
+      "attack": "collective",
+      "coupling": 0.3,
+      "excess_noise": 0.05,
+      "publication": true
+    },
+    {
+      "id": "collective_pure_loss",
+      "attack": "collective",
+      "coupling": 0.7,
+      "excess_noise": 0.0,
+      "publication": true
+    },
+    {
+      "id": "collective_high_coupling",
+      "attack": "collective",
+      "coupling": 0.99,
+      "excess_noise": 0.01,
+      "publication": false
+    },
+    {
+      "id": "collective_zero_transmission",
+      "attack": "collective",
+      "coupling": 0.3,
+      "excess_noise": 0.05,
+      "base": {
+        "T": 0.0
+      },
+      "publication": false
+    }
+  ]
+}
