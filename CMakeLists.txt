@@ -139,6 +139,9 @@ if(CVQKD_BUILD_TESTS)
     
     find_package(Python3 COMPONENTS Interpreter QUIET)
     if(Python3_Interpreter_FOUND)
+        add_test(NAME IndependentAttackOracle
+            COMMAND "${Python3_EXECUTABLE}"
+                "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_independent_attack_oracle.py")
         add_test(NAME ExperimentIntegration
             COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_experiment_integration.py"
                 --exe "$<TARGET_FILE:cvqkd_sim>"
