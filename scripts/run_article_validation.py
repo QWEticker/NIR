@@ -11,6 +11,10 @@ import subprocess
 import sys
 from pathlib import Path
 
+SCRIPT_DIRECTORY = Path(__file__).resolve().parent
+if str(SCRIPT_DIRECTORY) not in sys.path:
+    sys.path.insert(0, str(SCRIPT_DIRECTORY))
+
 from independent_attack_oracle import clopper_pearson
 
 

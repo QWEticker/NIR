@@ -18,7 +18,7 @@ std::string csv_field(const std::string& text) {
 StatisticsLogger::StatisticsLogger(const std::string& path) {
     const auto parent = std::filesystem::path(path).parent_path();
     if (!parent.empty()) std::filesystem::create_directories(parent);
-    out_.open(path);
+    out_.open(path, std::ios::out | std::ios::binary);
     if (!out_) throw std::runtime_error("cannot open output: " + path);
     out_ << std::setprecision(17);
 }
