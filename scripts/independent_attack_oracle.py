@@ -265,6 +265,8 @@ def analytical_prediction(parameters):
             )
             result["xi_expected"] = numerator / gain_squared
         result["gaussian_interval_assumptions"] = fraction in (0.0, 1.0)
+        if transmission == 0.0 or gain_squared == 0.0:
+            result["gaussian_interval_assumptions"] = False
         eve_limit = parameters.get("eve_saturation", math.inf)
         if eve_limit is not None and math.isfinite(eve_limit):
             result["analytical_supported"] = False
@@ -279,6 +281,8 @@ def analytical_prediction(parameters):
                 channel_noise
                 + parameters.get("excess_noise", 0.05) / transmission
             )
+        else:
+            result["gaussian_interval_assumptions"] = False
     else:
         raise ValueError(f"unsupported attack: {attack}")
     receiver_limit = parameters.get("saturation_level", math.inf)

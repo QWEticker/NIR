@@ -92,6 +92,16 @@ Use `--analytical-only` for the deterministic reference table, or override
 manifest records input and output SHA-256 hashes, seed, dimensions, Python
 version, and platform.
 
+Run the paired simulator/oracle campaign after building `cvqkd_sim`:
+
+```text
+python scripts/run_article_validation.py --exe build/cvqkd_sim --cases validation/article_cases.json --out-dir results/article_validation --publication-only
+```
+
+The paired run preserves each generated simulator configuration, raw outputs,
+separate simulator and oracle summaries, a comparison table, and a top-level
+manifest tied to the executable hash and embedded source revision.
+
 ## Article-safe conclusions
 
 - Agreement of \(T\), \(\xi\), Alice-Bob statistics, and Alice-Eve statistics

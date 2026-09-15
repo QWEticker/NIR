@@ -142,6 +142,9 @@ if(CVQKD_BUILD_TESTS)
         add_test(NAME IndependentAttackOracle
             COMMAND "${Python3_EXECUTABLE}"
                 "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_independent_attack_oracle.py")
+        add_test(NAME ArticleValidationRunner
+            COMMAND "${Python3_EXECUTABLE}"
+                "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_article_validation_runner.py")
         add_test(NAME ExperimentIntegration
             COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_experiment_integration.py"
                 --exe "$<TARGET_FILE:cvqkd_sim>"

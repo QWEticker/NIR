@@ -102,7 +102,7 @@
       "attack": "collective",
       "coupling": 0.99,
       "excess_noise": 0.01,
-      "publication": true
+      "publication": false
     },
     {
       "id": "collective_zero_transmission",
