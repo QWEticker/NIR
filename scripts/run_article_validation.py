@@ -118,6 +118,7 @@ def beta_interval(successes, trials, confidence_level):
 
 
 def summarize(case_id, rows, reference):
+    run_details = [json.loads(row["details"]) for row in rows]
     expected_transmission = finite_float(reference["T_expected"])
     expected_noise = finite_float(reference["xi_expected"])
     transmission = sample_metrics(
@@ -126,6 +127,33 @@ def summarize(case_id, rows, reference):
     noise = sample_metrics(
         [finite_float(row["xi_hat"]) for row in rows], expected_noise
     )
+    alice_bob = {
+        metric: sample_metrics(
+            [finite_float(details["Alice_Bob"][metric]) for details in run_details],
+            None,
+        )
+        for metric in ("I_discrete", "BER_gray", "SER")
+    }
+    alice_eve = {
+        metric: sample_metrics(
+            [
+                finite_float(details.get("Alice_Eve", {}).get(metric))
+                for details in run_details
+            ],
+            None,
+        )
+        for metric in ("I_discrete", "BER_gray", "SER")
+    }
+    eve_observed_fraction = sample_metrics(
+        [
+            finite_float(details.get("Alice_Eve", {}).get("observed"))
+            / finite_float(details.get("Alice_Eve", {}).get("total"))
+            if finite_float(details.get("Alice_Eve", {}).get("total"))
+            else None
+            for details in run_details
+        ],
+        None,
+    )
     gaussian = reference["gaussian_interval_assumptions"].lower() == "true"
     coverage = None
     successes = None
@@ -133,8 +161,7 @@ def summarize(case_id, rows, reference):
     coverage_upper = None
     if gaussian and expected_transmission is not None and expected_noise is not None:
         successes = 0
-        for row in rows:
-            details = json.loads(row["details"])
+        for details in run_details:
             estimate = details["estimate"]
             contains = (
                 estimate["T_lower"]
@@ -159,7 +186,7 @@ def summarize(case_id, rows, reference):
         coverage is None
         or coverage_lower <= 0.95 <= coverage_upper
     )
-    details = json.loads(rows[0]["details"])
+    details = run_details[0]
     return {
         "case_id": case_id,
         "attack": reference["attack"],
@@ -177,6 +204,15 @@ def summarize(case_id, rows, reference):
         "xi_sd": noise["sd"],
         "xi_se": noise["se"],
         "xi_rmse": noise["rmse"],
+        "I_AB_mean": alice_bob["I_discrete"]["mean"],
+        "I_AB_sd": alice_bob["I_discrete"]["sd"],
+        "BER_AB_mean": alice_bob["BER_gray"]["mean"],
+        "SER_AB_mean": alice_bob["SER"]["mean"],
+        "I_AE_mean": alice_eve["I_discrete"]["mean"],
+        "I_AE_sd": alice_eve["I_discrete"]["sd"],
+        "BER_AE_mean": alice_eve["BER_gray"]["mean"],
+        "SER_AE_mean": alice_eve["SER"]["mean"],
+        "Eve_observed_fraction": eve_observed_fraction["mean"],
         "joint_coverage": coverage,
         "coverage_successes": successes,
         "coverage_cp_lower": coverage_lower,

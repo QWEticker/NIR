@@ -58,6 +58,36 @@ class ArticleValidationRunner(unittest.TestCase):
             attack["metadata"]["validation_case"], "collective_anchor"
         )
 
+    def test_summary_includes_alice_bob_and_eve_statistics(self):
+        details = {
+            "N": 1000,
+            "Alice_Bob": {"I_discrete": 0.2, "BER_gray": 0.3, "SER": 0.4},
+            "Alice_Eve": {
+                "I_discrete": 0.5,
+                "BER_gray": 0.1,
+                "SER": 0.2,
+                "observed": 800,
+                "total": 1000,
+            },
+            "source_revision": "a" * 40,
+            "source_fingerprint": "b" * 64,
+        }
+        rows = [
+            {"T_hat": "0.6", "xi_hat": "0.01", "details": json.dumps(details)},
+            {"T_hat": "0.62", "xi_hat": "0.03", "details": json.dumps(details)},
+        ]
+        reference = {
+            "attack": "intercept_resend",
+            "T_expected": "0.61",
+            "xi_expected": "0.02",
+            "gaussian_interval_assumptions": "false",
+        }
+        summary = RUNNER.summarize("case", rows, reference)
+        self.assertAlmostEqual(summary["I_AB_mean"], 0.2)
+        self.assertAlmostEqual(summary["I_AE_mean"], 0.5)
+        self.assertAlmostEqual(summary["BER_AE_mean"], 0.1)
+        self.assertAlmostEqual(summary["Eve_observed_fraction"], 0.8)
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
