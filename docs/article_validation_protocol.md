@@ -73,13 +73,15 @@ The publication campaign in `validation/article_cases.json` fixes:
 - a fixed base seed;
 - raw run-level estimates and a summary containing mean, bias, standard
   deviation, standard error, RMSE, and interval coverage;
-- exact Clopper-Pearson bounds for empirical coverage.
+- exact Clopper-Pearson bounds for empirical marginal coverage.
 
 For Gaussian regimes, a row passes when the absolute mean bias is no larger
 than the greater of the declared numerical floor and four standard errors, and
-the 95% Clopper-Pearson interval contains the nominal 95% joint coverage.
-Coverage is deliberately omitted for partial IR, clipping, zero effective
-transmission, and other misspecified regimes.
+the Clopper-Pearson intervals for both transmission and excess-noise coverage
+contain the nominal 95% marginal coverage. Simultaneous coverage is reported
+only as a diagnostic because intersecting two marginal 95% intervals does not
+produce a 95% joint interval. Coverage is deliberately omitted for partial IR,
+clipping, zero effective transmission, and other misspecified regimes.
 
 Run the independent oracle without the simulator:
 

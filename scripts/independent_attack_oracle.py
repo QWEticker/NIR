@@ -473,41 +473,57 @@ def summarize_runs(case_id, prediction, runs, samples):
     noise = _sample_metrics(
         [run["xi_hat"] for run in runs], prediction["xi_expected"]
     )
-    coverage = None
-    coverage_lower = None
-    coverage_upper = None
-    successes = 0
+    transmission_coverage = None
+    transmission_coverage_lower = None
+    transmission_coverage_upper = None
+    transmission_successes = 0
+    noise_coverage = None
+    noise_coverage_lower = None
+    noise_coverage_upper = None
+    noise_successes = 0
+    joint_coverage = None
+    joint_successes = 0
     if (
         prediction["gaussian_interval_assumptions"]
         and prediction["T_expected"] is not None
         and prediction["xi_expected"] is not None
     ):
         for run in runs:
-            contains = (
-                run["T_lower"]
-                <= prediction["T_expected"]
-                <= run["T_upper"]
-                and run["xi_lower"]
-                <= prediction["xi_expected"]
-                <= run["xi_upper"]
+            transmission_contains = (
+                run["T_lower"] <= prediction["T_expected"] <= run["T_upper"]
             )
-            run["joint_contains"] = contains
-            successes += int(contains)
-        coverage = successes / len(runs)
-        coverage_lower, coverage_upper = clopper_pearson(
-            successes, len(runs), 0.95
+            noise_contains = (
+                run["xi_lower"] <= prediction["xi_expected"] <= run["xi_upper"]
+            )
+            run["T_contains"] = transmission_contains
+            run["xi_contains"] = noise_contains
+            run["joint_contains"] = transmission_contains and noise_contains
+            transmission_successes += int(transmission_contains)
+            noise_successes += int(noise_contains)
+            joint_successes += int(run["joint_contains"])
+        transmission_coverage = transmission_successes / len(runs)
+        noise_coverage = noise_successes / len(runs)
+        joint_coverage = joint_successes / len(runs)
+        (
+            transmission_coverage_lower,
+            transmission_coverage_upper,
+        ) = clopper_pearson(transmission_successes, len(runs), 0.95)
+        noise_coverage_lower, noise_coverage_upper = clopper_pearson(
+            noise_successes, len(runs), 0.95
         )
     else:
         for run in runs:
+            run["T_contains"] = None
+            run["xi_contains"] = None
             run["joint_contains"] = None
     bias_pass = True
     for metrics, absolute_floor in ((transmission, 0.01), (noise, 0.05)):
         if metrics["bias"] is not None:
             tolerance = max(absolute_floor, 4.0 * metrics["se"])
             bias_pass = bias_pass and abs(metrics["bias"]) <= tolerance
-    coverage_pass = (
-        coverage is None
-        or coverage_lower <= 0.95 <= coverage_upper
+    coverage_pass = transmission_coverage is None or (
+        transmission_coverage_lower <= 0.95 <= transmission_coverage_upper
+        and noise_coverage_lower <= 0.95 <= noise_coverage_upper
     )
     return {
         "case_id": case_id,
@@ -526,10 +542,19 @@ def summarize_runs(case_id, prediction, runs, samples):
         "xi_sd": noise["sd"],
         "xi_se": noise["se"],
         "xi_rmse": noise["rmse"],
-        "joint_coverage": coverage,
-        "coverage_successes": successes if coverage is not None else None,
-        "coverage_cp_lower": coverage_lower,
-        "coverage_cp_upper": coverage_upper,
+        "T_coverage": transmission_coverage,
+        "T_coverage_successes": (
+            transmission_successes if transmission_coverage is not None else None
+        ),
+        "T_coverage_cp_lower": transmission_coverage_lower,
+        "T_coverage_cp_upper": transmission_coverage_upper,
+        "xi_coverage": noise_coverage,
+        "xi_coverage_successes": (
+            noise_successes if noise_coverage is not None else None
+        ),
+        "xi_coverage_cp_lower": noise_coverage_lower,
+        "xi_coverage_cp_upper": noise_coverage_upper,
+        "joint_coverage": joint_coverage,
         "gaussian_interval_assumptions": prediction[
             "gaussian_interval_assumptions"
         ],
@@ -626,6 +651,8 @@ def main():
             "xi_lower",
             "xi_upper",
             "identifiable",
+            "T_contains",
+            "xi_contains",
             "joint_contains",
         ]
         summary_fields = [
@@ -645,10 +672,15 @@ def main():
             "xi_sd",
             "xi_se",
             "xi_rmse",
+            "T_coverage",
+            "T_coverage_successes",
+            "T_coverage_cp_lower",
+            "T_coverage_cp_upper",
+            "xi_coverage",
+            "xi_coverage_successes",
+            "xi_coverage_cp_lower",
+            "xi_coverage_cp_upper",
             "joint_coverage",
-            "coverage_successes",
-            "coverage_cp_lower",
-            "coverage_cp_upper",
             "gaussian_interval_assumptions",
             "criteria_pass",
         ]

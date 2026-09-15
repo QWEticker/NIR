@@ -88,6 +88,44 @@ class ArticleValidationRunner(unittest.TestCase):
         self.assertAlmostEqual(summary["BER_AE_mean"], 0.1)
         self.assertAlmostEqual(summary["Eve_observed_fraction"], 0.8)
 
+    def test_summary_uses_marginal_interval_coverage(self):
+        rows = []
+        for index in range(20):
+            details = {
+                "N": 1000,
+                "Alice_Bob": {
+                    "I_discrete": 0.2,
+                    "BER_gray": 0.3,
+                    "SER": 0.4,
+                },
+                "estimate": {
+                    "T_lower": 0.61 if index == 0 else 0.59,
+                    "T_upper": 0.62 if index == 0 else 0.61,
+                    "xi_lower": 0.02 if index == 1 else 0.0,
+                    "xi_upper": 0.03 if index == 1 else 0.02,
+                },
+                "source_revision": "a" * 40,
+                "source_fingerprint": "b" * 64,
+            }
+            rows.append(
+                {
+                    "T_hat": "0.6",
+                    "xi_hat": "0.01",
+                    "details": json.dumps(details),
+                }
+            )
+        reference = {
+            "attack": "collective",
+            "T_expected": "0.6",
+            "xi_expected": "0.01",
+            "gaussian_interval_assumptions": "true",
+        }
+        summary = RUNNER.summarize("coverage", rows, reference)
+        self.assertEqual(summary["T_coverage"], 0.95)
+        self.assertEqual(summary["xi_coverage"], 0.95)
+        self.assertEqual(summary["joint_coverage"], 0.9)
+        self.assertTrue(summary["criteria_pass"])
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

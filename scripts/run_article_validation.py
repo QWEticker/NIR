@@ -155,26 +155,41 @@ def summarize(case_id, rows, reference):
         None,
     )
     gaussian = reference["gaussian_interval_assumptions"].lower() == "true"
-    coverage = None
-    successes = None
-    coverage_lower = None
-    coverage_upper = None
+    transmission_coverage = None
+    transmission_successes = None
+    transmission_coverage_lower = None
+    transmission_coverage_upper = None
+    noise_coverage = None
+    noise_successes = None
+    noise_coverage_lower = None
+    noise_coverage_upper = None
+    joint_coverage = None
     if gaussian and expected_transmission is not None and expected_noise is not None:
-        successes = 0
+        transmission_successes = 0
+        noise_successes = 0
+        joint_successes = 0
         for details in run_details:
             estimate = details["estimate"]
-            contains = (
+            transmission_contains = (
                 estimate["T_lower"]
                 <= expected_transmission
                 <= estimate["T_upper"]
-                and estimate["xi_lower"]
-                <= expected_noise
-                <= estimate["xi_upper"]
             )
-            successes += int(contains)
-        coverage = successes / len(rows)
-        coverage_lower, coverage_upper = beta_interval(
-            successes, len(rows), 0.95
+            noise_contains = (
+                estimate["xi_lower"] <= expected_noise <= estimate["xi_upper"]
+            )
+            transmission_successes += int(transmission_contains)
+            noise_successes += int(noise_contains)
+            joint_successes += int(transmission_contains and noise_contains)
+        transmission_coverage = transmission_successes / len(rows)
+        noise_coverage = noise_successes / len(rows)
+        joint_coverage = joint_successes / len(rows)
+        (
+            transmission_coverage_lower,
+            transmission_coverage_upper,
+        ) = beta_interval(transmission_successes, len(rows), 0.95)
+        noise_coverage_lower, noise_coverage_upper = beta_interval(
+            noise_successes, len(rows), 0.95
         )
     bias_pass = True
     for metrics, floor in ((transmission, 0.01), (noise, 0.05)):
@@ -182,9 +197,9 @@ def summarize(case_id, rows, reference):
             bias_pass = bias_pass and abs(metrics["bias"]) <= max(
                 floor, 4.0 * metrics["se"]
             )
-    coverage_pass = (
-        coverage is None
-        or coverage_lower <= 0.95 <= coverage_upper
+    coverage_pass = transmission_coverage is None or (
+        transmission_coverage_lower <= 0.95 <= transmission_coverage_upper
+        and noise_coverage_lower <= 0.95 <= noise_coverage_upper
     )
     details = run_details[0]
     return {
@@ -213,10 +228,15 @@ def summarize(case_id, rows, reference):
         "BER_AE_mean": alice_eve["BER_gray"]["mean"],
         "SER_AE_mean": alice_eve["SER"]["mean"],
         "Eve_observed_fraction": eve_observed_fraction["mean"],
-        "joint_coverage": coverage,
-        "coverage_successes": successes,
-        "coverage_cp_lower": coverage_lower,
-        "coverage_cp_upper": coverage_upper,
+        "T_coverage": transmission_coverage,
+        "T_coverage_successes": transmission_successes,
+        "T_coverage_cp_lower": transmission_coverage_lower,
+        "T_coverage_cp_upper": transmission_coverage_upper,
+        "xi_coverage": noise_coverage,
+        "xi_coverage_successes": noise_successes,
+        "xi_coverage_cp_lower": noise_coverage_lower,
+        "xi_coverage_cp_upper": noise_coverage_upper,
+        "joint_coverage": joint_coverage,
         "gaussian_interval_assumptions": gaussian,
         "criteria_pass": bias_pass and coverage_pass,
         "source_revision": details["source_revision"],

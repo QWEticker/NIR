@@ -83,6 +83,31 @@ class IndependentAttackOracle(unittest.TestCase):
         )
         self.assertTrue(math.isfinite(first["xi_hat"]))
 
+    def test_coverage_criterion_uses_marginal_intervals(self):
+        runs = []
+        for index in range(20):
+            runs.append(
+                {
+                    "T_hat": 0.6,
+                    "xi_hat": 0.01,
+                    "T_lower": 0.61 if index == 0 else 0.59,
+                    "T_upper": 0.62 if index == 0 else 0.61,
+                    "xi_lower": 0.02 if index == 1 else 0.0,
+                    "xi_upper": 0.03 if index == 1 else 0.02,
+                }
+            )
+        prediction = {
+            "attack": "collective",
+            "T_expected": 0.6,
+            "xi_expected": 0.01,
+            "gaussian_interval_assumptions": True,
+        }
+        summary = ORACLE.summarize_runs("coverage", prediction, runs, 1000)
+        self.assertEqual(summary["T_coverage"], 0.95)
+        self.assertEqual(summary["xi_coverage"], 0.95)
+        self.assertEqual(summary["joint_coverage"], 0.9)
+        self.assertTrue(summary["criteria_pass"])
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
