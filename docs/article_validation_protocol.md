@@ -76,12 +76,14 @@ The publication campaign in `validation/article_cases.json` fixes:
 - exact Clopper-Pearson bounds for empirical marginal coverage.
 
 For Gaussian regimes, a row passes when the absolute mean bias is no larger
-than the greater of the declared numerical floor and four standard errors, and
-the Clopper-Pearson intervals for both transmission and excess-noise coverage
-contain the nominal 95% marginal coverage. Simultaneous coverage is reported
-only as a diagnostic because intersecting two marginal 95% intervals does not
-produce a 95% joint interval. Coverage is deliberately omitted for partial IR,
-clipping, zero effective transmission, and other misspecified regimes.
+than the greater of the declared numerical floor and four standard errors. For
+both transmission and excess noise, the upper endpoint of the two-sided 95%
+Clopper-Pearson interval must reach the nominal 95% marginal coverage; this is
+an exact test for statistically detectable undercoverage and accepts
+conservative intervals. Simultaneous coverage is reported only as a diagnostic
+because intersecting two marginal 95% intervals does not produce a 95% joint
+interval. Coverage is deliberately omitted for partial IR, clipping, zero
+effective transmission, and other misspecified regimes.
 
 Run the independent oracle without the simulator:
 

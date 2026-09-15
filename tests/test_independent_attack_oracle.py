@@ -108,6 +108,12 @@ class IndependentAttackOracle(unittest.TestCase):
         self.assertEqual(summary["joint_coverage"], 0.9)
         self.assertTrue(summary["criteria_pass"])
 
+        for run in runs:
+            run["T_lower"] = 0.61
+            run["T_upper"] = 0.62
+        summary = ORACLE.summarize_runs("undercoverage", prediction, runs, 1000)
+        self.assertFalse(summary["criteria_pass"])
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

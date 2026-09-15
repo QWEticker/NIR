@@ -198,8 +198,8 @@ def summarize(case_id, rows, reference):
                 floor, 4.0 * metrics["se"]
             )
     coverage_pass = transmission_coverage is None or (
-        transmission_coverage_lower <= 0.95 <= transmission_coverage_upper
-        and noise_coverage_lower <= 0.95 <= noise_coverage_upper
+        transmission_coverage_upper >= 0.95
+        and noise_coverage_upper >= 0.95
     )
     details = run_details[0]
     return {

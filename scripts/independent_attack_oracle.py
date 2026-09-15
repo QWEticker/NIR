@@ -522,8 +522,8 @@ def summarize_runs(case_id, prediction, runs, samples):
             tolerance = max(absolute_floor, 4.0 * metrics["se"])
             bias_pass = bias_pass and abs(metrics["bias"]) <= tolerance
     coverage_pass = transmission_coverage is None or (
-        transmission_coverage_lower <= 0.95 <= transmission_coverage_upper
-        and noise_coverage_lower <= 0.95 <= noise_coverage_upper
+        transmission_coverage_upper >= 0.95
+        and noise_coverage_upper >= 0.95
     )
     return {
         "case_id": case_id,
