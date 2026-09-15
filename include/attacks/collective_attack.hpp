@@ -5,10 +5,7 @@
 
 namespace cvqkd {
 
-/// Коллективная атака (Collective Attack).
-/// Ева взаимодействует с каждым сигналом независимо, сохраняя квантовую память
-/// для последующего совместного измерения. Моделируется добавлением избыточного шума
-/// и частичной утечкой информации через параметр coupling_strength.
+/// Gaussian optical channel on coherent amplitudes; see docs/article_models.md.
 class CollectiveAttack final : public IAttack {
 public:
     /// @param coupling_strength Сила взаимодействия с сигналом (0..1)
@@ -20,6 +17,7 @@ public:
 
     void        apply(Measurement& m) const override;
     std::string name() const override { return "collective"; }
+    AttackStage stage() const noexcept override { return AttackStage::ChannelOutput; }
 
 private:
     double coupling_;

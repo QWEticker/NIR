@@ -68,6 +68,31 @@ target_compile_options(cvqkd_lib PRIVATE
 # ============================================================
 add_executable(cvqkd_sim main.cpp)
 target_link_libraries(cvqkd_sim PRIVATE cvqkd_lib)
+add_executable(cvqkd_validation tools/validation_probe.cpp)
+target_link_libraries(cvqkd_validation PRIVATE cvqkd_lib)
+
+find_package(Git QUIET)
+set(CVQKD_REVISION "unversioned")
+if(GIT_FOUND)
+    execute_process(COMMAND "${GIT_EXECUTABLE}" rev-parse HEAD
+        WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+        OUTPUT_VARIABLE CVQKD_REVISION OUTPUT_STRIP_TRAILING_WHITESPACE
+        ERROR_QUIET)
+endif()
+file(GLOB_RECURSE FINGERPRINT_FILES RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}"
+    "src/*.cpp" "include/*.hpp" "tools/*.cpp")
+list(APPEND FINGERPRINT_FILES "CMakeLists.txt")
+list(SORT FINGERPRINT_FILES)
+set(FINGERPRINT_INPUT "")
+foreach(SOURCE_FILE IN LISTS FINGERPRINT_FILES)
+    file(SHA256 "${CMAKE_CURRENT_SOURCE_DIR}/${SOURCE_FILE}" SOURCE_HASH)
+    string(APPEND FINGERPRINT_INPUT "${SOURCE_FILE}:${SOURCE_HASH}\n")
+endforeach()
+string(SHA256 CVQKD_FINGERPRINT "${FINGERPRINT_INPUT}")
+
+target_compile_definitions(cvqkd_lib PRIVATE
+    CVQKD_SOURCE_REVISION="${CVQKD_REVISION}"
+    CVQKD_SOURCE_FINGERPRINT="${CVQKD_FINGERPRINT}")
 
 # ============================================================
 # === GoogleTest (FetchContent) ===
@@ -75,34 +100,48 @@ target_link_libraries(cvqkd_sim PRIVATE cvqkd_lib)
 # ============================================================
 # === GoogleTest (FetchContent) ===
 # ============================================================
+# ============================================================
+# === GoogleTest (Локальная сборка из extern) ===
+# ============================================================
 if(CVQKD_BUILD_TESTS)
-    include(FetchContent)
-    FetchContent_Declare(
-        googletest
-        GIT_REPOSITORY https://github.com/google/googletest.git
-        GIT_TAG        v1.14.0
-        GIT_SHALLOW    TRUE
-    )
+    set(GOOGLETEST_LOCAL_DIR "${CMAKE_CURRENT_SOURCE_DIR}/extern/googletest-1.14.0")
+    
+    if(NOT EXISTS "${GOOGLETEST_LOCAL_DIR}/CMakeLists.txt")
+        message(FATAL_ERROR "GoogleTest не найден в ${GOOGLETEST_LOCAL_DIR}. Пожалуйста, скачайте и распакуйте архив v1.14.0 в папку extern.")
+    endif()
+
+    # Настройки для корректной компиляции под MSVC
     set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
     set(INSTALL_GTEST OFF CACHE BOOL "" FORCE)
-    FetchContent_MakeAvailable(googletest)
+    
+    # Добавляем локальную директорию вместо сетевой загрузки
+    add_subdirectory("${GOOGLETEST_LOCAL_DIR}" "${CMAKE_CURRENT_BINARY_DIR}/_deps/googletest-build" EXCLUDE_FROM_ALL)
 
     enable_testing()
     
     file(GLOB TEST_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/tests/*.cpp")
     
-    # 1. Сначала создаём цель (исполняемый файл тестов)
     add_executable(cvqkd_tests ${TEST_SOURCES})
     
-    # 2. Линкуем библиотеки
-    target_link_libraries(cvqkd_tests PRIVATE cvqkd_lib GTest::gtest_main)
+    target_link_libraries(cvqkd_tests PRIVATE 
+        cvqkd_lib 
+        GTest::gtest_main
+    )
     
-    # 3. Теперь можно добавлять include-пути (исправлена переменная googletest_SOURCE_DIR)
+    # Явное указание путей для IntelliSense и компилятора
     target_include_directories(cvqkd_tests PRIVATE
-        ${googletest_SOURCE_DIR}/include
-        ${googletest_SOURCE_DIR}
+        "${GOOGLETEST_LOCAL_DIR}/googletest/include"
+        "${GOOGLETEST_LOCAL_DIR}/googletest"
     )
     
     include(GoogleTest)
     gtest_discover_tests(cvqkd_tests)
+    
+    find_package(Python3 COMPONENTS Interpreter QUIET)
+    if(Python3_Interpreter_FOUND)
+        add_test(NAME ExperimentIntegration
+            COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_experiment_integration.py"
+                --exe "$<TARGET_FILE:cvqkd_sim>"
+                --workdir "${CMAKE_CURRENT_BINARY_DIR}/integration-tests")
+    endif()
 endif()

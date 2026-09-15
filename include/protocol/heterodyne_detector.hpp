@@ -13,12 +13,14 @@ public:
 
     Measurement measure(const std::vector<Complex>& incoming);
 
-    /// Суммарная дисперсия шума детектора, приведённая ко входу (SNU).
+    /// Per-component variance of the uncalibrated amplitude readout.
     double detector_noise_variance() const noexcept;
+    std::size_t clipped_components() const noexcept { return clipped_; }
 
 private:
     ProtocolConfig cfg_;
     mutable RNG    rng_;  // ← Добавлено mutable
+    std::size_t clipped_ = 0;
 
 };
 

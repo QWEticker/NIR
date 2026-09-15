@@ -13,6 +13,17 @@ struct ChannelEstimate {
     double xi_ci_half;          ///< Полуширина ДИ для ξ (95%)
     double sigma2_residual;     ///< Дисперсия остатков
     std::size_t n_samples;
+    double slope = 0.0;
+    double slope_se = 0.0;
+    double slope_lower = 0.0;
+    double slope_upper = 0.0;
+    double T_lower = 0.0;
+    double T_upper = 0.0;
+    double xi_lower = 0.0;
+    double xi_upper = 0.0;
+    double variance_lower = 0.0;
+    double variance_upper = 0.0;
+    bool identifiable = false;
 };
 
 /// MLE-оценка параметров канала по парам (x_A, y_B) методом наименьших квадратов.

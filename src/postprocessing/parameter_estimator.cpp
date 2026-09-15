@@ -1,56 +1,71 @@
 #include "postprocessing/parameter_estimator.hpp"
-#include <Eigen/Dense>
+#include "postprocessing/statistics.hpp"
+#include <algorithm>
+#include <array>
 #include <cmath>
-#include <numeric>
+#include <limits>
+#include <stdexcept>
 
 namespace cvqkd {
 
-ParameterEstimator::ParameterEstimator(const ProtocolConfig& cfg, double c) 
-    : cfg_(cfg), conf_(c) {}
+ParameterEstimator::ParameterEstimator(const ProtocolConfig& cfg, double confidence)
+    : cfg_(cfg), conf_(confidence) {
+    if (!std::isfinite(cfg.eta) || cfg.eta <= 0.0 || cfg.eta > 1.0 ||
+        !std::isfinite(cfg.v_el) || cfg.v_el < 0.0 ||
+        !std::isfinite(confidence) || confidence <= 0.0 || confidence >= 1.0)
+        throw std::invalid_argument("invalid estimator calibration or confidence level");
+}
 
 ChannelEstimate ParameterEstimator::estimate(const VectorR& x, const VectorR& y) const {
-    const Eigen::Index n = x.size();
-    if (n < 2) return ChannelEstimate{};
-
-    // Линейная модель измерения (на квадратуру): y = sqrt(eta*T)*x + n,
-    // где n = sqrt(eta)*n_канал + n_детектор и
-    //   Var(n) = eta*(T*xi/2) + (1 + v_el)/eta.
-    // Здесь x — амплитуда Алисы (до канала), y — отсчёт гетеродина.
+    if (x.size() != y.size() || x.size() < 3 || !x.allFinite() || !y.allFinite())
+        throw std::invalid_argument("estimation requires matching finite vectors, n >= 3");
     const double xx = x.squaredNorm();
-    const double xy = x.dot(y);
-    const double slope = xy / xx;            // оценка sqrt(eta*T)
-    const VectorR resid = y - slope * x;
-
-    // Дисперсия остатков (полный шум на выходе детектора на одну квадратуру).
-    const double sigma2_out = resid.squaredNorm() / static_cast<double>(n - 1);
-
-    // Детектор откалиброван: eta и v_el известны. Восстанавливаем T канала.
-    // slope^2 = eta*T  =>  T_hat = slope^2 / eta.
-    const double eta = std::max(1e-12, cfg_.eta);
-    const double T_hat = (slope * slope) / eta;
-
-    // Инверсия бюджета шума для избыточного шума канала xi (полный, SNU):
-    //   sigma2_out = eta*(T*xi/2) + (1 + v_el)/eta
-    //   => eta*T*xi/2 = sigma2_out - (1 + v_el)/eta
-    //   => xi = 2*(sigma2_out - (1 + v_el)/eta) / (eta*T) = 2*(...) / slope^2
-    const double det_noise = (1.0 + cfg_.v_el) / eta;          // (1+v_el)/eta
-    const double channel_noise_out = sigma2_out - det_noise;   // = eta*T*xi/2
-    const double slope2 = std::max(1e-12, slope * slope);
-    const double xi_hat = std::max(0.0, 2.0 * channel_noise_out / slope2);
-
-    // Доверительные интервалы (асимптотические, 95%)
-    const double z = (conf_ > 0.99) ? 2.576 : 1.96;
-    // T_hat = slope^2/eta  =>  se_T = 2*|slope|*se_slope/eta, se_slope = sqrt(sigma2_out/xx).
-    const double se_T = (2.0 * std::abs(slope) * std::sqrt(sigma2_out / xx)) / eta;
-    
+    if (!std::isfinite(xx) || xx <= 0.0)
+        throw std::invalid_argument("Alice's signal must have finite nonzero energy");
+    const double df = static_cast<double>(x.size() - 1);
     ChannelEstimate e{};
-    e.T_hat            = T_hat;
-    e.T_ci_half        = se_T * z;
-    e.xi_hat           = xi_hat;
-    // Оценка погрешности xi через распространение ошибок (упрощенно 10% от величины или зависит от N)
-    e.xi_ci_half       = xi_hat * 0.15 + (sigma2_out / std::sqrt(static_cast<double>(n))) * 0.01; 
-    e.sigma2_residual  = sigma2_out;
-    e.n_samples        = static_cast<std::size_t>(n);
+    e.n_samples = static_cast<std::size_t>(x.size());
+    e.slope = x.dot(y) / xx;
+    const double sse = (y - e.slope * x).squaredNorm();
+    e.sigma2_residual = sse / df;
+    if (!std::isfinite(e.slope) || !std::isfinite(e.sigma2_residual))
+        throw std::overflow_error("regression overflow");
+    e.slope_se = std::sqrt(e.sigma2_residual / xx);
+    const double half = student_quantile((1.0 + conf_) / 2.0, df) * e.slope_se;
+    e.slope_lower = e.slope - half;
+    e.slope_upper = e.slope + half;
+    e.T_hat = e.slope * e.slope / cfg_.eta;
+    const double min_square = e.slope_lower <= 0.0 && e.slope_upper >= 0.0 ? 0.0 :
+        std::min(e.slope_lower * e.slope_lower, e.slope_upper * e.slope_upper);
+    e.T_lower = min_square / cfg_.eta;
+    e.T_upper = std::max(e.slope_lower * e.slope_lower,
+                         e.slope_upper * e.slope_upper) / cfg_.eta;
+    e.T_ci_half = std::max(e.T_hat - e.T_lower, e.T_upper - e.T_hat);
+    const double detector_variance = (1.0 + cfg_.v_el) / 2.0;
+    e.xi_hat = e.slope == 0.0 ? std::numeric_limits<double>::quiet_NaN() :
+        4.0 * (e.sigma2_residual - detector_variance) / (e.slope * e.slope);
+
+    // Bonferroni rectangle for slope and variance under independent Gaussian noise.
+    const double tail = (1.0 - conf_) / 4.0;
+    const double joint_half = student_quantile(1.0 - tail, df) * e.slope_se;
+    const double slope_lo = e.slope - joint_half, slope_hi = e.slope + joint_half;
+    e.variance_lower = sse / chi_square_quantile(1.0 - tail, df);
+    e.variance_upper = sse / chi_square_quantile(tail, df);
+    e.identifiable = slope_lo > 0.0;
+    if (slope_lo <= 0.0 && slope_hi >= 0.0) {
+        e.xi_lower = -std::numeric_limits<double>::infinity();
+        e.xi_upper = std::numeric_limits<double>::infinity();
+    } else {
+        const std::array<double, 4> bounds{
+            4.0 * (e.variance_lower - detector_variance) / (slope_lo * slope_lo),
+            4.0 * (e.variance_lower - detector_variance) / (slope_hi * slope_hi),
+            4.0 * (e.variance_upper - detector_variance) / (slope_lo * slope_lo),
+            4.0 * (e.variance_upper - detector_variance) / (slope_hi * slope_hi)};
+        const auto range = std::minmax_element(bounds.begin(), bounds.end());
+        e.xi_lower = *range.first;
+        e.xi_upper = *range.second;
+    }
+    e.xi_ci_half = std::max(e.xi_hat - e.xi_lower, e.xi_upper - e.xi_hat);
     return e;
 }
 

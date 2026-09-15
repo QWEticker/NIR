@@ -22,12 +22,7 @@ class ExperimentRunner {
     std::shared_ptr<StatisticsLogger> logger_;
     std::vector<std::unique_ptr<IAttack>> attacks_;
 
-    // Analytical models corresponding to attacks (for security analysis)
-    std::vector<std::unique_ptr<cvqkd::IAttackModel>> attack_models_;
-    std::vector<std::string> attack_names_;
-    std::vector<std::string> attack_params_;
-
-    void run_one_point(double distance_km, const std::string &scenario);
+    void run_one_point(ProtocolConfig pc, std::size_t point, std::size_t repeat);
 };
 
 } // namespace cvqkd

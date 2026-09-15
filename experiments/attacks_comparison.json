@@ -1,0 +1,24 @@
+{
+  "name": "attacks_comparison",
+  "base": {
+    "alpha": 0.2,
+    "xi": 0.01,
+    "eta": 0.9,
+    "v_el": 0.001,
+    "beta": 0.98,
+    "saturation_level": 10.0,
+    "N": 1000000,
+    "seed": 42,
+    "V_A": 15.0,
+    "eps_total": 1e-9
+  },
+  "distances_km": [5, 10, 20, 30, 50],
+  "attacks": [
+    "none",
+    "entangling_cloner",
+    "intercept_resend",
+    "lo_manipulation",
+    "saturation"
+  ],
+  "runs_per_point": 3
+}

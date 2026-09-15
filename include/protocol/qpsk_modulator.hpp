@@ -13,8 +13,9 @@ public:
     AliceSignal generate(std::size_t N);
 
     double alpha() const noexcept { return alpha_; }
-    /// Дисперсия модуляции V_A = α² (в SNU) для QPSK.
+    /// Mean photon number (legacy accessor).
     double modulation_variance() const noexcept { return alpha_ * alpha_; }
+    double quadrature_variance() const noexcept { return 2.0 * alpha_ * alpha_; }
 
 private:
     double alpha_;

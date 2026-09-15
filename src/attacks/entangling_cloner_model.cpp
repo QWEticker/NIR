@@ -1,37 +1,47 @@
 #include "attacks/entangling_cloner_model.hpp"
 #include <cmath>
+#include <stdexcept>
 
 namespace cvqkd {
 
-EntanglingClonerModel::EntanglingClonerModel(double xi_extra) : xi_extra_(xi_extra) {}
+EntanglingClonerModel::EntanglingClonerModel(double extra) : xi_extra_(extra) {
+    if (!std::isfinite(extra) || extra < 0.0)
+        throw std::invalid_argument("entangling-cloner excess noise must be nonnegative");
+}
 
-// Entangling cloner model: returns a modified 4x4 covariance matrix (B+E).
-AttackResult EntanglingClonerModel::computeEffect(double T, double V_A, double xi_in) const {
-    AttackResult r;
-    // total xi experienced by Bob (input referred)
-    double xi_total = xi_in + xi_extra_;
-    // Build CM following standard formula (same as HolevoCalculator::buildEntanglingClonerCM)
-    double V = V_A + 1.0;
-    double W = 1.0;
-    if (T < 1.0 - 1e-12) {
-        W = 1.0 + (T * xi_total) / (1.0 - T);
-    } else {
-        W = 1.0 + xi_total;
-    }
+Eigen::Matrix<double, 6, 6> EntanglingClonerModel::covariance(double T, double V_A,
+                                                           double xi) const {
+    const double excess = xi + xi_extra_;
+    if (!std::isfinite(T) || T < 0.0 || T > 1.0 ||
+        !std::isfinite(V_A) || V_A < 0.0 || !std::isfinite(xi) || xi < 0.0 ||
+        !std::isfinite(excess) || (T == 1.0 && excess > 0.0))
+        throw std::invalid_argument("finite thermal dilation requires T < 1 for nonzero noise");
+    const double V = V_A + 1.0;
+    const double W = T == 1.0 ? 1.0 : 1.0 + T * excess / (1.0 - T);
+    const double thermal_correlation = std::sqrt((W - 1.0) * (W + 1.0));
+    Eigen::Matrix<double, 6, 6> cm = Eigen::Matrix<double, 6, 6>::Zero();
+    cm.block<2, 2>(0, 0) = (T * V + (1.0 - T) * W) * Eigen::Matrix2d::Identity();
+    cm.block<2, 2>(2, 2) = ((1.0 - T) * V + T * W) * Eigen::Matrix2d::Identity();
+    cm.block<2, 2>(4, 4) = W * Eigen::Matrix2d::Identity();
+    Eigen::Matrix2d Z = Eigen::Matrix2d::Identity();
+    Z(1, 1) = -1.0;
+    cm.block<2, 2>(0, 2) = std::sqrt(T * (1.0 - T)) * (W - V) * Eigen::Matrix2d::Identity();
+    cm.block<2, 2>(0, 4) = std::sqrt(1.0 - T) * thermal_correlation * Z;
+    cm.block<2, 2>(2, 4) = std::sqrt(T) * thermal_correlation * Z;
+    cm.block<2, 2>(2, 0) = cm.block<2, 2>(0, 2).transpose();
+    cm.block<2, 2>(4, 0) = cm.block<2, 2>(0, 4).transpose();
+    cm.block<2, 2>(4, 2) = cm.block<2, 2>(2, 4).transpose();
+    return cm;
+}
 
-    double b = T * V + (1.0 - T) * W;
-    double e = (1.0 - T) * V + T * W;
-    double c = std::sqrt(std::max(0.0, T * (1.0 - T))) * (V - W);
-
-    Eigen::Matrix4d Vbe; Vbe.setZero();
-    Vbe(0,0) = b; Vbe(1,1) = b;
-    Vbe(2,2) = e; Vbe(3,3) = e;
-    Vbe(0,2) = c; Vbe(2,0) = c;
-    Vbe(1,3) = -c; Vbe(3,1) = -c;
-
-    r.type = AttackResultType::Covariance;
-    r.modified_cm = Vbe;
-    return r;
+AttackResult EntanglingClonerModel::computeEffect(double T, double V_A, double xi) const {
+    AttackResult result;
+    result.type = AttackResultType::Covariance;
+    result.dilation = covariance(T, V_A, xi);
+    result.modified_cm = result.dilation.topLeftCorner<4, 4>();
+    result.transmission = T;
+    result.xi_total = xi + xi_extra_;
+    return result;
 }
 
 } // namespace cvqkd

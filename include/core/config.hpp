@@ -7,13 +7,15 @@
 
 
 namespace cvqkd {
+std::string source_revision();
+std::string source_fingerprint();
 
 /// Конфигурация протокола и физических параметров системы.
 struct ProtocolConfig {
     // --- Источник ---
     double alpha            = 0.5;     ///< Амплитуда когерентного состояния
     // --- Канал ---
-    double T                = 0.1;     ///< Трансмиссивность канала [0,1]
+    double T                = 0.3981071705534972; ///< Power transmission at 20 km
     double xi               = 0.01;    ///< Избыточный шум (SNU)
     double distance_km      = 20.0;    ///< Длина линии (для T = 10^(-αL/1S0))
     // --- Приёмник ---
@@ -25,9 +27,11 @@ struct ProtocolConfig {
     // --- Статистика ---
     std::size_t N           = 1'000'000; ///< Число импульсов
     std::uint64_t seed      = 42;      ///< Seed ГПСЧ
+    double confidence_level = 0.95;
 
     /// Вычислить T из расстояния, если оно задано.
     void recompute_T_from_distance() noexcept;
+    void validate() const;
 };
 
 /// Конфигурация серии экспериментов.
@@ -42,6 +46,7 @@ struct ExperimentConfig {
     std::size_t               runs_per_point = 5; ///< число повторов
 
     static ExperimentConfig from_json_file(const std::string& path);
+    void validate() const;
 };
 
 } // namespace cvqkd

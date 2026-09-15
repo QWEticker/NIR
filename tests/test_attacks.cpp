@@ -6,7 +6,8 @@
 
 using namespace cvqkd;
 
-TEST(SaturationAttack, ClipsToLevel) {
+TEST(SaturationAttack, ClipsToLevel) 
+{
     Measurement m;
     m.X.resize(3);
     m.P.resize(3);
@@ -19,7 +20,8 @@ TEST(SaturationAttack, ClipsToLevel) {
     EXPECT_DOUBLE_EQ(m.P(1), 10.0);
 }
 
-TEST(LOManipulationAttack, ScalesLinear) {
+TEST(LOManipulationAttack, ScalesLinear) 
+{
     Measurement m;
     m.X.resize(2);
     m.P.resize(2);
@@ -31,7 +33,8 @@ TEST(LOManipulationAttack, ScalesLinear) {
     EXPECT_DOUBLE_EQ(m.P(1), 2.5);
 }
 
-TEST(InterceptResendAttack, AddsNoiseAndResends) {
+TEST(InterceptResendAttack, AddsNoiseAndResends) 
+{
     Measurement m;
     m.X.resize(100);
     m.P.resize(100);
@@ -60,7 +63,8 @@ TEST(InterceptResendAttack, AddsNoiseAndResends) {
     EXPECT_GT(var_P, 0.0);
 }
 
-TEST(CollectiveAttack, AddsExcessNoise) {
+TEST(CollectiveAttack, AddsExcessNoise) 
+{
     Measurement m;
     m.X.resize(100);
     m.P.resize(100);

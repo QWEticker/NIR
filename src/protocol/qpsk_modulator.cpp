@@ -1,10 +1,14 @@
 #include "protocol/qpsk_modulator.hpp"
 #include <cmath>
+#include <stdexcept>
 
 namespace cvqkd {
 
 QPSKModulator::QPSKModulator(double alpha, std::uint64_t seed)
-    : alpha_(alpha), rng_(seed) {}
+    : alpha_(alpha), rng_(seed) {
+    if (!std::isfinite(alpha) || alpha <= 0.0)
+        throw std::invalid_argument("alpha must be finite and positive");
+}
 
 AliceSignal QPSKModulator::generate(std::size_t N) {
     AliceSignal s;

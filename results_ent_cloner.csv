@@ -1,0 +1,4 @@
+scenario,distance_km,T_true,xi_true,T_hat,xi_hat,T_ci,xi_ci,I_AB,chi_BE,K_asymp,K_beta,secure,elapsed_ms,attack_name,attack_params
+ent_cloner_safe,5,0.794328,0.001,0.710746,0,0.0174314,7.86907e-06,0.0343693,1.48245,0,0,0,1154.95,"entangling_cloner","{"name":"entangling_cloner","param":0.0005}"
+ent_cloner_safe,10,0.630957,0.001,0.564181,0,0.0155299,7.86855e-06,0.0243741,1.44766,0,0,0,1151.76,"entangling_cloner","{"name":"entangling_cloner","param":0.0005}"
+ent_cloner_safe,20,0.398107,0.001,0.355396,0,0.0123253,7.86781e-06,0.0133409,1.4491,0,0,0,1142.83,"entangling_cloner","{"name":"entangling_cloner","param":0.0005}"
